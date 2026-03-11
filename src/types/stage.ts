@@ -5,6 +5,14 @@ export type StagePlacementInput = {
   pieceId: number;
 };
 
+export type StageRewardInput = {
+  rewardId: number;
+  rewardTiming: "first_clear" | "clear";
+  quantity: number;
+  sortOrder?: number;
+  isActive?: boolean;
+};
+
 export type StageFormInput = {
   stageNo: number;
   stageName: string;
@@ -19,4 +27,5 @@ export type StageFormInput = {
   publishedAt: string | null;
   unpublishedAt: string | null;
   placements: StagePlacementInput[];
+  rewards: StageRewardInput[];
 };

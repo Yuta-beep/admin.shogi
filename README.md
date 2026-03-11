@@ -81,3 +81,4 @@ bun run check
 | `GET`    | `/api/stages`          | ステージ一覧（名称・使用駒で絞り込み可） |
 | `POST`   | `/api/stages`          | ステージ作成（JSON・初期配置含む）       |
 | `GET`    | `/api/stages/:stageId` | ステージ詳細（初期配置含む）             |
+| `PUT`    | `/api/stages/:stageId` | ステージ報酬更新（初回/通常クリア）      |
