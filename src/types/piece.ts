@@ -4,6 +4,7 @@ export type PieceFormInput = {
   pieceCode: string;
   kanji: string;
   name: string;
+  rarity: "N" | "R" | "SR" | "UR" | "SSR";
   moveDescriptionJa: string | null;
   movePatternId: number | null;
   moveVectors: MovePatternVector[];

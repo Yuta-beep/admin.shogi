@@ -258,6 +258,7 @@ export function PieceDetailTemplate({ pieceId }: Props) {
               <div>駒コード: {data.piece.pieceCode}</div>
               <div>漢字: {data.piece.kanji}</div>
               <div>駒名: {data.piece.name}</div>
+              <div>レアリティ: {data.piece.rarity}</div>
               <div>移動説明: {data.piece.moveDescriptionJa ?? "なし"}</div>
               <div>スキルID: {data.piece.skillId ?? "なし"}</div>
               <div>スキル説明: {data.piece.skillDesc ?? "なし"}</div>
