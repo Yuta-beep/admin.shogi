@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { StagePlacementRecord, StageRecord } from "@/api/model/stage";
+import {
+  RewardOption,
+  StagePlacementRecord,
+  StageRecord,
+  StageRewardRecord,
+} from "@/api/model/stage";
+import { Button } from "@/components/atoms/button";
+import { SelectInput } from "@/components/atoms/select-input";
+import { TextInput } from "@/components/atoms/text-input";
 
 type Props = {
   stageId: number;
@@ -11,6 +19,13 @@ type Props = {
 type StageDetailData = {
   stage: StageRecord;
   placements: StagePlacementRecord[];
+  rewards: StageRewardRecord[];
+  rewardOptions: RewardOption[];
+};
+type StageRewardFormRow = {
+  rewardId: string;
+  rewardTiming: "first_clear" | "clear";
+  quantity: string;
 };
 
 const BOARD_SIZE = 9;
@@ -75,8 +90,11 @@ async function fetchStageDetail(id: number): Promise<StageDetailData> {
 
 export function StageDetailTemplate({ stageId }: Props) {
   const [data, setData] = useState<StageDetailData | null>(null);
+  const [rewardRows, setRewardRows] = useState<StageRewardFormRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingRewards, setIsSavingRewards] = useState(false);
+  const [rewardMessage, setRewardMessage] = useState<string | null>(null);
 
   const placementMap = useMemo(() => {
     const map = new Map<string, StagePlacementRecord>();
@@ -94,6 +112,14 @@ export function StageDetailTemplate({ stageId }: Props) {
       try {
         const detail = await fetchStageDetail(stageId);
         setData(detail);
+        setRewardRows(
+          detail.rewards.map((reward) => ({
+            rewardId: String(reward.rewardId),
+            rewardTiming:
+              reward.rewardTiming === "clear" ? "clear" : "first_clear",
+            quantity: String(reward.quantity),
+          })),
+        );
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       } finally {
@@ -102,6 +128,86 @@ export function StageDetailTemplate({ stageId }: Props) {
     };
     void run();
   }, [stageId]);
+
+  const addRewardRow = () => {
+    setRewardRows((prev) => [
+      ...prev,
+      { rewardId: "", rewardTiming: "first_clear", quantity: "1" },
+    ]);
+  };
+
+  const removeRewardRow = (index: number) => {
+    setRewardRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateRewardRow = (
+    index: number,
+    key: keyof StageRewardFormRow,
+    value: string,
+  ) => {
+    setRewardRows((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)),
+    );
+  };
+
+  const saveRewards = async () => {
+    setIsSavingRewards(true);
+    setRewardMessage(null);
+    setError(null);
+    try {
+      const rewards = rewardRows
+        .map((row, index) => ({
+          rewardId: Number(row.rewardId),
+          rewardTiming: row.rewardTiming,
+          quantity: Number(row.quantity),
+          sortOrder: index + 1,
+        }))
+        .filter(
+          (row) =>
+            Number.isInteger(row.rewardId) &&
+            row.rewardId > 0 &&
+            Number.isInteger(row.quantity) &&
+            row.quantity > 0,
+        );
+
+      const res = await fetch(`/api/stages/${stageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rewards }),
+      });
+      const json = (await res.json()) as {
+        success: boolean;
+        data?: { rewards: StageRewardRecord[] };
+        error?: string;
+      };
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error ?? "報酬の更新に失敗しました");
+      }
+
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              rewards: json.data?.rewards ?? [],
+            }
+          : prev,
+      );
+      setRewardRows(
+        (json.data?.rewards ?? []).map((reward) => ({
+          rewardId: String(reward.rewardId),
+          rewardTiming:
+            reward.rewardTiming === "clear" ? "clear" : "first_clear",
+          quantity: String(reward.quantity),
+        })),
+      );
+      setRewardMessage("報酬を更新しました。");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsSavingRewards(false);
+    }
+  };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
@@ -227,6 +333,88 @@ export function StageDetailTemplate({ stageId }: Props) {
                   </table>
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">報酬</h2>
+              <Button
+                variant="neutral"
+                className="h-8 px-3 text-xs"
+                onClick={addRewardRow}
+                disabled={isSavingRewards}
+              >
+                報酬を追加
+              </Button>
+            </div>
+            {rewardMessage ? (
+              <p className="mb-2 text-sm text-emerald-700">{rewardMessage}</p>
+            ) : null}
+
+            {rewardRows.length === 0 ? (
+              <p className="text-sm text-slate-500">報酬が未設定です。</p>
+            ) : (
+              <div className="space-y-2">
+                {rewardRows.map((row, index) => (
+                  <div
+                    key={`detail-reward-${index}`}
+                    className="grid grid-cols-1 gap-2 rounded border border-slate-200 p-2 md:grid-cols-[160px_1fr_120px_110px]"
+                  >
+                    <SelectInput
+                      value={row.rewardTiming}
+                      onChange={(e) =>
+                        updateRewardRow(index, "rewardTiming", e.target.value)
+                      }
+                      disabled={isSavingRewards}
+                    >
+                      <option value="first_clear">初回クリア</option>
+                      <option value="clear">2回目以降</option>
+                    </SelectInput>
+                    <SelectInput
+                      value={row.rewardId}
+                      onChange={(e) =>
+                        updateRewardRow(index, "rewardId", e.target.value)
+                      }
+                      disabled={isSavingRewards}
+                    >
+                      <option value="">報酬を選択</option>
+                      {(data.rewardOptions ?? []).map((option) => (
+                        <option key={option.rewardId} value={option.rewardId}>
+                          {option.rewardType === "currency" ? "通貨" : "駒"}:{" "}
+                          {option.rewardName}
+                        </option>
+                      ))}
+                    </SelectInput>
+                    <TextInput
+                      type="number"
+                      min={1}
+                      value={row.quantity}
+                      onChange={(e) =>
+                        updateRewardRow(index, "quantity", e.target.value)
+                      }
+                      disabled={isSavingRewards}
+                    />
+                    <Button
+                      variant="danger"
+                      className="h-10"
+                      onClick={() => removeRewardRow(index)}
+                      disabled={isSavingRewards}
+                    >
+                      削除
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3">
+              <Button
+                onClick={() => void saveRewards()}
+                disabled={isSavingRewards}
+              >
+                {isSavingRewards ? "更新中..." : "報酬を更新"}
+              </Button>
             </div>
           </section>
         </>

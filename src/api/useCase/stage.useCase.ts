@@ -1,28 +1,36 @@
 import {
+  RewardOption,
   PieceOption,
   StagePlacementRecord,
+  StageRewardRecord,
   StageRecord,
 } from "@/api/model/stage";
 import {
   existsStageNo,
   insertStage,
+  listRewardOptions,
   listPieceOptions,
+  listStageRewardsByStageId,
   listStagePieceUsages,
   listStagePlacementsByStageId,
+  replaceStageRewards,
   listStages,
   getStageById,
 } from "@/api/dao/stage.dao";
-import { StageFormInput } from "@/types/stage";
+import { StageFormInput, StageRewardInput } from "@/types/stage";
 
 // レスポンス型
 export type StageListResponse = {
   stages: StageRecord[];
   pieces: PieceOption[];
+  rewardOptions: RewardOption[];
 };
 
 export type StageDetailResponse = {
   stage: StageRecord;
   placements: StagePlacementRecord[];
+  rewards: StageRewardRecord[];
+  rewardOptions: RewardOption[];
 };
 
 type StageSearchInput = {
@@ -43,16 +51,18 @@ export async function listStagesUseCase(
   const hasFilter = keyword !== "" || normalizedPieceIds.length > 0;
 
   if (!hasFilter) {
-    const [stages, pieces] = await Promise.all([
+    const [stages, pieces, rewardOptions] = await Promise.all([
       listStages(),
       listPieceOptions(),
+      listRewardOptions(),
     ]);
-    return { stages, pieces };
+    return { stages, pieces, rewardOptions };
   }
 
-  const [stages, pieces, stagePieceUsages] = await Promise.all([
+  const [stages, pieces, rewardOptions, stagePieceUsages] = await Promise.all([
     listStages(),
     listPieceOptions(),
+    listRewardOptions(),
     listStagePieceUsages(),
   ]);
 
@@ -75,7 +85,7 @@ export async function listStagesUseCase(
     return true;
   });
 
-  return { stages: filteredStages, pieces };
+  return { stages: filteredStages, pieces, rewardOptions };
 }
 
 // ステージ詳細取得
@@ -85,8 +95,12 @@ export async function getStageDetailUseCase(
   const stage = await getStageById(stageId);
   if (!stage) return null;
 
-  const placements = await listStagePlacementsByStageId(stageId);
-  return { stage, placements };
+  const [placements, rewards, rewardOptions] = await Promise.all([
+    listStagePlacementsByStageId(stageId),
+    listStageRewardsByStageId(stageId),
+    listRewardOptions(),
+  ]);
+  return { stage, placements, rewards, rewardOptions };
 }
 
 // ステージ作成
@@ -112,5 +126,17 @@ export async function createStageUseCase(
     publishedAt: input.publishedAt,
     unpublishedAt: input.unpublishedAt,
     placements: input.placements,
+    rewards: input.rewards,
   });
+}
+
+export async function updateStageRewardsUseCase(
+  stageId: number,
+  rewards: StageRewardInput[],
+): Promise<StageRewardRecord[] | null> {
+  const stage = await getStageById(stageId);
+  if (!stage) return null;
+
+  await replaceStageRewards(stageId, rewards);
+  return listStageRewardsByStageId(stageId);
 }
