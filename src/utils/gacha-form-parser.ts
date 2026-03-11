@@ -101,6 +101,11 @@ export function parseGachaFormBody(
     throw new Error("pawnCost + goldCost must be greater than 0");
   }
 
+  const imageSource = asString(body.imageSource).trim() || "supabase";
+  if (imageSource !== "supabase") {
+    throw new Error("imageSource must be supabase");
+  }
+
   const targetPieces = parseTargetPieces(body.targetPieces);
   if (targetPieces.length === 0) {
     throw new Error("targetPieces is required");
@@ -117,7 +122,7 @@ export function parseGachaFormBody(
     rarityRateSsr,
     pawnCost,
     goldCost,
-    imageSource: asString(body.imageSource).trim() || "supabase",
+    imageSource,
     imageBucket: asString(body.imageBucket).trim() || null,
     imageKey: asString(body.imageKey).trim() || null,
     imageVersion: asNonNegativeInt(body.imageVersion, 1) || 1,
