@@ -6,6 +6,7 @@ export type InsertPieceInput = {
   pieceCode: string;
   kanji: string;
   name: string;
+  rarity: "N" | "R" | "SR" | "UR" | "SSR";
   moveDescriptionJa: string | null;
   movePatternId: number;
   skillId: number | null;
@@ -19,7 +20,7 @@ export type InsertPieceInput = {
 };
 
 const PIECE_SELECT =
-  "piece_id,piece_code,kanji,name,move_description_ja,move_pattern_id,skill_id,image_source,image_bucket,image_key,image_version,is_active,published_at,unpublished_at,created_at,updated_at,m_move_pattern:move_pattern_id(move_name),m_skill:skill_id(skill_desc)";
+  "piece_id,piece_code,kanji,name,rarity,move_description_ja,move_pattern_id,skill_id,image_source,image_bucket,image_key,image_version,is_active,published_at,unpublished_at,created_at,updated_at,m_move_pattern:move_pattern_id(move_name),m_skill:skill_id(skill_desc)";
 
 function firstRelation<T extends Record<string, unknown>>(
   value: unknown,
@@ -40,6 +41,12 @@ function mapPieceRow(row: Record<string, unknown>): PieceRecord {
     pieceCode: row.piece_code as string,
     kanji: row.kanji as string,
     name: row.name as string,
+    rarity: ((row.rarity as string | null) ?? "N") as
+      | "N"
+      | "R"
+      | "SR"
+      | "UR"
+      | "SSR",
     moveDescriptionJa: (row.move_description_ja as string | null) ?? null,
     movePatternId: row.move_pattern_id as number,
     movePatternName: movePattern?.move_name ?? null,
@@ -62,6 +69,7 @@ function toDbPayload(input: InsertPieceInput) {
     piece_code: input.pieceCode,
     kanji: input.kanji,
     name: input.name,
+    rarity: input.rarity,
     move_description_ja: input.moveDescriptionJa,
     move_pattern_id: input.movePatternId,
     skill_id: input.skillId,

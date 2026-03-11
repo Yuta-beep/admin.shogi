@@ -3,6 +3,7 @@ export type PieceRecord = {
   pieceCode: string;
   kanji: string;
   name: string;
+  rarity: "N" | "R" | "SR" | "UR" | "SSR";
   moveDescriptionJa: string | null;
   movePatternId: number;
   movePatternName: string | null;

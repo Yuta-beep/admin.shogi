@@ -13,6 +13,7 @@ describe("admin DAO DB schema contract", () => {
 
     expect(pieceDao).toContain('.from("m_piece")');
     expect(pieceDao).toContain("move_description_ja");
+    expect(pieceDao).toContain("rarity");
     expect(pieceDao).toContain("m_move_pattern:move_pattern_id(move_name)");
     expect(pieceDao).toContain("m_skill:skill_id(skill_desc)");
 
