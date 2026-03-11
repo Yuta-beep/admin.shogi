@@ -21,58 +21,6 @@
 - `/stages/new` — ステージ作成（盤面初期配置）
 - `/stages/:stageId` — ステージ詳細
 
-## アーキテクチャ
-
-責務を層で分離しています。
-
-```
-src/
-  app/                      # ルーティング層
-    api/                    # API Route（パース → UseCase → レスポンスのみ）
-      pieces/
-      stages/
-    pieces/                 # ページ
-    stages/
-  api/                      # バックエンド層
-    model/                  # ドメイン型定義
-    dao/                    # DBアクセス（Supabase）
-    useCase/                # ビジネスロジック
-    helpers/                # APIレスポンス・パラメータ共通処理
-  components/               # UIコンポーネント（Atomic Design）
-    layout/                 # レイアウト
-    atoms/
-    molecules/
-    organisms/
-    templates/
-  hooks/                    # クライアントサイド状態管理
-  lib/                      # Supabase クライアント
-  types/                    # フロントエンド向け型定義
-  utils/                    # フロントエンド向けユーティリティ
-```
-
-### 層の責務
-
-| 層                      | 役割                                                           |
-| ----------------------- | -------------------------------------------------------------- |
-| `app/api/`              | リクエスト受付・レスポンス返却のみ。ビジネスロジックは持たない |
-| `api/useCase/`          | ビジネスロジックの集約。DAO を組み合わせて処理を完結させる     |
-| `api/dao/`              | Supabase へのクエリ。DB 固有の入力型を自身で定義する           |
-| `api/model/`            | ドメイン型。フロントエンド・バックエンド共用                   |
-| `components/templates/` | ページ相当のコンポーネント。hooks から状態を受け取り表示       |
-| `hooks/`                | API 呼び出し・フォーム状態管理。テンプレートに渡す             |
-
-### API レスポンス形式
-
-全エンドポイント統一形式：
-
-```ts
-// 成功
-{ success: true, data: T }
-
-// 失敗
-{ success: false, error: string }
-```
-
 ## 必要な環境変数
 
 `.env.local` を作成して設定してください。
@@ -82,6 +30,9 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_PIECE_IMAGE_BUCKET=piece-images
 ```
+
+Amplify でデプロイする場合は、Hosting の Environment variables にも同じキーを設定してください。
+`amplify.yml` でこれらを読み込み、`.env.production` を生成してビルド時に利用します。
 
 ## セットアップ
 

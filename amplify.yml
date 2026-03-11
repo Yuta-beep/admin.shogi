@@ -1,0 +1,29 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - curl -fsSL https://bun.sh/install | bash
+        - export BUN_INSTALL="$HOME/.bun"
+        - export PATH="$BUN_INSTALL/bin:$PATH"
+        - bun --version
+        - test -n "$SUPABASE_URL" || (echo "SUPABASE_URL is required in Amplify environment variables" && exit 1)
+        - test -n "$SUPABASE_SERVICE_ROLE_KEY" || (echo "SUPABASE_SERVICE_ROLE_KEY is required in Amplify environment variables" && exit 1)
+        - echo "SUPABASE_URL=$SUPABASE_URL" > .env.production
+        - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
+        - echo "SUPABASE_PIECE_IMAGE_BUCKET=${SUPABASE_PIECE_IMAGE_BUCKET:-piece-images}" >> .env.production
+        - bun install --frozen-lockfile
+    build:
+      commands:
+        - export BUN_INSTALL="$HOME/.bun"
+        - export PATH="$BUN_INSTALL/bin:$PATH"
+        - export NEXT_TELEMETRY_DISABLED=1
+        - bun run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
