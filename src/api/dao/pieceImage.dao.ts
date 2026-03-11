@@ -1,4 +1,5 @@
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { detectImageDimensions } from "@/utils/image-dimensions";
 
 function detectExt(file: File) {
   const fromName = file.name.split(".").pop();
@@ -26,6 +27,13 @@ export async function uploadPieceImage(input: {
 
   const arrayBuffer = await input.imageFile.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
+  const dimensions = detectImageDimensions(bytes);
+  if (!dimensions) {
+    throw new Error("image format is invalid");
+  }
+  if (dimensions.width !== dimensions.height) {
+    throw new Error("image must be 1:1 aspect ratio");
+  }
 
   const { error } = await supabase.storage.from(bucket).upload(key, bytes, {
     cacheControl: "3600",

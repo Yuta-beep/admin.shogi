@@ -528,11 +528,18 @@ export function PieceForm({
         </FormField>
 
         <FormField label="画像アップロード">
-          <FileInput
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => onChange("imageFile", e.target.files?.[0] ?? null)}
-            disabled={isSubmitting}
-          />
+          <div className="flex flex-col gap-1">
+            <FileInput
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) =>
+                onChange("imageFile", e.target.files?.[0] ?? null)
+              }
+              disabled={isSubmitting}
+            />
+            <span className="text-xs text-slate-500">
+              新規アップロードは縦横比1:1の画像のみ対応です。既存の画像は1:1でなくてもそのまま利用できます。あわせて、駒の見た目サイズはなるべく揃えてください。
+            </span>
+          </div>
         </FormField>
 
         <FormField label="公開開始日時">
