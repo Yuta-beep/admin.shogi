@@ -4,7 +4,6 @@ import { GachaPieceOption } from "@/api/model/gacha";
 import { Button } from "@/components/atoms/button";
 import { CheckboxInput } from "@/components/atoms/checkbox-input";
 import { FormField } from "@/components/molecules/form-field";
-import { SelectInput } from "@/components/atoms/select-input";
 import { TextInput } from "@/components/atoms/text-input";
 
 type FormState = {
@@ -90,15 +89,11 @@ export function GachaForm({
           />
         </FormField>
 
-        <FormField label="画像ソース">
-          <SelectInput
-            value={form.imageSource}
-            onChange={(event) => onChange("imageSource", event.target.value)}
-            disabled={isSubmitting}
-          >
-            <option value="supabase">supabase</option>
-            <option value="s3">s3</option>
-          </SelectInput>
+        <FormField label="画像ソース（固定）">
+          <TextInput value="supabase" disabled />
+          <p className="mt-1 text-xs text-slate-600">
+            ガチャ画像の保存先は supabase 固定です。
+          </p>
         </FormField>
 
         <FormField label="N確率" required>

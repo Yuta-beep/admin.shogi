@@ -66,6 +66,15 @@ describe("parseGachaFormBody", () => {
     );
   });
 
+  it("throws when imageSource is not supabase", () => {
+    const body = createBaseBody();
+    body.imageSource = "s3";
+
+    expect(() => parseGachaFormBody(body)).toThrow(
+      "imageSource must be supabase",
+    );
+  });
+
   it("throws when targetPieces has duplicated pieceId", () => {
     const body = createBaseBody();
     body.targetPieces = [
