@@ -152,11 +152,13 @@ export function PieceManagementTemplate({ mode, pieceId }: Props) {
               本当に削除しますか？この操作は取り消せません。
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              対象: ID {deleteTarget.pieceId} / {deleteTarget.kanji} {deleteTarget.name}
+              対象: ID {deleteTarget.pieceId} / {deleteTarget.kanji}{" "}
+              {deleteTarget.name}
             </p>
 
             <label className="mt-4 block text-sm font-medium text-slate-700">
-              削除するには <span className="font-bold">delete</span> と入力してください
+              削除するには <span className="font-bold">delete</span>{" "}
+              と入力してください
             </label>
             <input
               value={deleteText}

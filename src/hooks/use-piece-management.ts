@@ -134,7 +134,8 @@ function toEditFormState(detail: PieceDetailResponse): PieceFormState {
       );
       if (ruleTypes.has("immobile")) return "immobile";
       if (ruleTypes.has("turn_parity_override")) return "turn_parity_moon";
-      if (ruleTypes.has("copy_front_enemy_move")) return "copy_front_enemy_move";
+      if (ruleTypes.has("copy_front_enemy_move"))
+        return "copy_front_enemy_move";
       if (ruleTypes.has("copy_last_enemy_move")) return "copy_last_enemy_move";
       return "none";
     })(),

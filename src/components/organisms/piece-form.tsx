@@ -352,8 +352,12 @@ export function PieceForm({
               >
                 <option value="none">なし</option>
                 <option value="immobile">移動不可（immobile）</option>
-                <option value="turn_parity_moon">月タイプ（奇偶ターンで移動変更）</option>
-                <option value="copy_front_enemy_move">正面敵の動きをコピー</option>
+                <option value="turn_parity_moon">
+                  月タイプ（奇偶ターンで移動変更）
+                </option>
+                <option value="copy_front_enemy_move">
+                  正面敵の動きをコピー
+                </option>
                 <option value="copy_last_enemy_move">直前敵手をコピー</option>
               </SelectInput>
             </FormField>

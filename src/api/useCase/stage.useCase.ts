@@ -1,4 +1,8 @@
-import { PieceOption, StagePlacementRecord, StageRecord } from "@/api/model/stage";
+import {
+  PieceOption,
+  StagePlacementRecord,
+  StageRecord,
+} from "@/api/model/stage";
 import {
   existsStageNo,
   insertStage,
@@ -33,9 +37,7 @@ export async function listStagesUseCase(
   const keyword = (search?.stageName ?? "").trim().toLowerCase();
   const normalizedPieceIds = Array.from(
     new Set(
-      (search?.pieceIds ?? []).filter(
-        (id) => Number.isInteger(id) && id > 0,
-      ),
+      (search?.pieceIds ?? []).filter((id) => Number.isInteger(id) && id > 0),
     ),
   );
   const hasFilter = keyword !== "" || normalizedPieceIds.length > 0;

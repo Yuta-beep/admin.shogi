@@ -162,9 +162,7 @@ function parseMoveVectors(formData: FormData) {
   });
 }
 
-function parseSpecialMove(
-  formData: FormData,
-): {
+function parseSpecialMove(formData: FormData): {
   moveConstraintsJson: Record<string, unknown> | null;
   moveRulesJson: Array<{
     ruleType: string;
@@ -182,7 +180,11 @@ function parseSpecialMove(
       return {
         moveConstraintsJson: null,
         moveRulesJson: [
-          { ruleType: "immobile", priority: 0, paramsJson: { source: "admin_form" } },
+          {
+            ruleType: "immobile",
+            priority: 0,
+            paramsJson: { source: "admin_form" },
+          },
         ],
       };
     case "copy_front_enemy_move":
@@ -216,7 +218,12 @@ function parseSpecialMove(
             priority: 10,
             paramsJson: {
               odd: { type: "step_limit", max_step: 1, rays: "queen" },
-              even: { type: "step_limit", min_step: 2, max_step: 2, rays: "queen" },
+              even: {
+                type: "step_limit",
+                min_step: 2,
+                max_step: 2,
+                rays: "queen",
+              },
               source: "admin_form",
             },
           },

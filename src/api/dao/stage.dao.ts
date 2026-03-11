@@ -1,4 +1,8 @@
-import { PieceOption, StagePlacementRecord, StageRecord } from "@/api/model/stage";
+import {
+  PieceOption,
+  StagePlacementRecord,
+  StageRecord,
+} from "@/api/model/stage";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 // DAOが受け取るDB挿入/更新用の型
@@ -105,7 +109,9 @@ export async function existsStageNo(stageNo: number): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
-export async function insertStage(input: InsertStageInput): Promise<StageRecord> {
+export async function insertStage(
+  input: InsertStageInput,
+): Promise<StageRecord> {
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase

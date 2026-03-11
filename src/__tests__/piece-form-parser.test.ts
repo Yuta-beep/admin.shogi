@@ -148,7 +148,10 @@ describe("parsePieceFormData", () => {
   it("throws when moveVectorsJson has invalid shape", () => {
     const formData = createBaseFormData();
     formData.delete("movePatternId");
-    formData.set("moveVectorsJson", JSON.stringify([{ dx: 1, dy: 0, maxStep: 0 }]));
+    formData.set(
+      "moveVectorsJson",
+      JSON.stringify([{ dx: 1, dy: 0, maxStep: 0 }]),
+    );
 
     expect(() => parsePieceFormData(formData)).toThrow(
       "moveVectorsJson[0] maxStep must be a positive integer",

@@ -1,5 +1,13 @@
-import { createStageUseCase, listStagesUseCase } from "@/api/useCase/stage.useCase";
-import { errorResponse, ok, created, badRequest } from "@/api/helpers/apiResponse";
+import {
+  createStageUseCase,
+  listStagesUseCase,
+} from "@/api/useCase/stage.useCase";
+import {
+  errorResponse,
+  ok,
+  created,
+  badRequest,
+} from "@/api/helpers/apiResponse";
 import { StagePlacementInput } from "@/types/stage";
 
 export const runtime = "nodejs";
@@ -67,7 +75,9 @@ export async function GET(request: Request) {
       .filter((id) => Number.isInteger(id) && id > 0);
 
     const hasFilter = stageName !== "" || pieceIds.length > 0;
-    const data = await listStagesUseCase(hasFilter ? { stageName, pieceIds } : undefined);
+    const data = await listStagesUseCase(
+      hasFilter ? { stageName, pieceIds } : undefined,
+    );
     return ok(data);
   } catch (error) {
     return errorResponse(error);

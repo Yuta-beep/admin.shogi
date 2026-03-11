@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { parsePieceId, parseQuery, parseStageId } from "@/api/helpers/apiParams";
+import {
+  parsePieceId,
+  parseQuery,
+  parseStageId,
+} from "@/api/helpers/apiParams";
 import { errorResponse } from "@/api/helpers/apiResponse";
 
 describe("apiParams", () => {
@@ -10,9 +14,15 @@ describe("apiParams", () => {
   });
 
   it("throws for invalid ids", () => {
-    expect(() => parsePieceId("0")).toThrow("pieceId must be a positive integer");
-    expect(() => parseStageId("-1")).toThrow("stageId must be a positive integer");
-    expect(() => parseStageId("1.5")).toThrow("stageId must be a positive integer");
+    expect(() => parsePieceId("0")).toThrow(
+      "pieceId must be a positive integer",
+    );
+    expect(() => parseStageId("-1")).toThrow(
+      "stageId must be a positive integer",
+    );
+    expect(() => parseStageId("1.5")).toThrow(
+      "stageId must be a positive integer",
+    );
   });
 
   it("trims nullable query", () => {

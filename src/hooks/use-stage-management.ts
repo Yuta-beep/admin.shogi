@@ -1,10 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  PieceOption,
-  StageRecord,
-} from "@/api/model/stage";
+import { PieceOption, StageRecord } from "@/api/model/stage";
 import { StagePlacementInput } from "@/types/stage";
 
 type StageFormState = {

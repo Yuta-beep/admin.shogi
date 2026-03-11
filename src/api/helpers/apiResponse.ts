@@ -27,10 +27,7 @@ export function serverError(message: string) {
 export function errorResponse(error: unknown) {
   const message = error instanceof Error ? error.message : "Internal error";
 
-  if (
-    message.includes("not found") ||
-    message.includes("Not found")
-  ) {
+  if (message.includes("not found") || message.includes("Not found")) {
     return notFound(message);
   }
   if (

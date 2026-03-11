@@ -128,7 +128,9 @@ export async function insertMovePatternWithVectors(
         options.rules.map((rule, index) => ({
           move_pattern_id: movePatternId,
           rule_type: rule.ruleType,
-          priority: Number.isInteger(rule.priority) ? rule.priority : 100 + index,
+          priority: Number.isInteger(rule.priority)
+            ? rule.priority
+            : 100 + index,
           params_json: rule.paramsJson ?? {},
           is_active: true,
         })),
@@ -162,7 +164,8 @@ export async function updateMovePatternSpecialConfig(
   const supabase = getSupabaseAdminClient();
 
   const updatePayload: Record<string, unknown> = {};
-  if (typeof input.canJump === "boolean") updatePayload.can_jump = input.canJump;
+  if (typeof input.canJump === "boolean")
+    updatePayload.can_jump = input.canJump;
   if (input.constraintsJson !== undefined) {
     updatePayload.constraints_json = input.constraintsJson ?? null;
   }
@@ -250,10 +253,11 @@ export async function listMoveRulesByMovePatternId(
 
   return (data ?? [])
     .filter((row) => (row.is_active as boolean | null) !== false)
-    .map((row): MovePatternRule => ({
-      ruleType: row.rule_type as string,
-      priority: (row.priority as number) ?? 100,
-      paramsJson:
-        (row.params_json as Record<string, unknown> | null) ?? null,
-    }));
+    .map(
+      (row): MovePatternRule => ({
+        ruleType: row.rule_type as string,
+        priority: (row.priority as number) ?? 100,
+        paramsJson: (row.params_json as Record<string, unknown> | null) ?? null,
+      }),
+    );
 }

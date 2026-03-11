@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { MovePatternVector, PieceRecord, SkillEffectRecord } from "@/api/model/piece";
+import {
+  MovePatternVector,
+  PieceRecord,
+  SkillEffectRecord,
+} from "@/api/model/piece";
 
 type Props = {
   pieceId: number;
@@ -52,32 +56,58 @@ function buildMoveCells(vectors: MovePatternVector[]) {
 
 function effectTypeLabel(value: string) {
   switch (value) {
-    case "apply_status": return "状態付与";
-    case "board_hazard": return "盤面ギミック";
-    case "buff": return "強化";
-    case "capture_constraint": return "捕獲制約";
-    case "capture_with_leap": return "飛び越え捕獲";
-    case "copy_ability": return "能力コピー";
-    case "defense_or_immunity": return "防御・無効化";
-    case "destroy_hand_piece": return "手駒破壊";
-    case "disable_piece": return "駒無効化";
-    case "extra_action": return "追加行動";
-    case "forced_move": return "強制移動";
-    case "gain_piece": return "駒獲得";
-    case "inherit_ability": return "能力継承";
-    case "linked_action": return "連動行動";
-    case "modify_movement": return "移動変更";
-    case "multi_capture": return "複数捕獲";
-    case "reflective_movement": return "反射移動";
-    case "remove_piece": return "駒除去";
-    case "return_to_hand": return "手駒に戻す";
-    case "revive": return "復活";
-    case "seal_skill": return "スキル封印";
-    case "send_to_hand": return "手駒送り";
-    case "substitute": return "身代わり";
-    case "summon_piece": return "駒召喚";
-    case "transform_piece": return "駒変化";
-    default: return "その他";
+    case "apply_status":
+      return "状態付与";
+    case "board_hazard":
+      return "盤面ギミック";
+    case "buff":
+      return "強化";
+    case "capture_constraint":
+      return "捕獲制約";
+    case "capture_with_leap":
+      return "飛び越え捕獲";
+    case "copy_ability":
+      return "能力コピー";
+    case "defense_or_immunity":
+      return "防御・無効化";
+    case "destroy_hand_piece":
+      return "手駒破壊";
+    case "disable_piece":
+      return "駒無効化";
+    case "extra_action":
+      return "追加行動";
+    case "forced_move":
+      return "強制移動";
+    case "gain_piece":
+      return "駒獲得";
+    case "inherit_ability":
+      return "能力継承";
+    case "linked_action":
+      return "連動行動";
+    case "modify_movement":
+      return "移動変更";
+    case "multi_capture":
+      return "複数捕獲";
+    case "reflective_movement":
+      return "反射移動";
+    case "remove_piece":
+      return "駒除去";
+    case "return_to_hand":
+      return "手駒に戻す";
+    case "revive":
+      return "復活";
+    case "seal_skill":
+      return "スキル封印";
+    case "send_to_hand":
+      return "手駒送り";
+    case "substitute":
+      return "身代わり";
+    case "summon_piece":
+      return "駒召喚";
+    case "transform_piece":
+      return "駒変化";
+    default:
+      return "その他";
   }
 }
 
@@ -85,44 +115,75 @@ function targetRuleLabel(value: string) {
   const adjacentMatch = value.match(/^adjacent_(\d+)$/);
   if (adjacentMatch) return `周囲${adjacentMatch[1]}マス`;
   switch (value) {
-    case "self": return "自身";
-    case "adjacent_area": return "隣接範囲";
-    case "adjacent_8": return "周囲8マス";
-    case "enemy_piece": return "敵駒";
-    case "ally_piece": return "味方駒";
-    case "board_cell": return "盤面マス";
-    case "enemy_hand": return "敵の手駒";
-    case "hand_piece": return "手駒";
-    case "front_enemy": return "前方の敵";
-    case "left_right": return "左右";
-    case "same_row_or_col": return "同じ行または列";
-    case "empty_cell": return "空きマス";
-    case "all_enemy": return "敵全体";
-    case "all_ally": return "味方全体";
-    case "unspecified": return "未指定";
-    default: return "その他";
+    case "self":
+      return "自身";
+    case "adjacent_area":
+      return "隣接範囲";
+    case "adjacent_8":
+      return "周囲8マス";
+    case "enemy_piece":
+      return "敵駒";
+    case "ally_piece":
+      return "味方駒";
+    case "board_cell":
+      return "盤面マス";
+    case "enemy_hand":
+      return "敵の手駒";
+    case "hand_piece":
+      return "手駒";
+    case "front_enemy":
+      return "前方の敵";
+    case "left_right":
+      return "左右";
+    case "same_row_or_col":
+      return "同じ行または列";
+    case "empty_cell":
+      return "空きマス";
+    case "all_enemy":
+      return "敵全体";
+    case "all_ally":
+      return "味方全体";
+    case "unspecified":
+      return "未指定";
+    default:
+      return "その他";
   }
 }
 
 function triggerTimingLabel(value: string) {
   switch (value) {
-    case "after_move": return "移動後";
-    case "on_capture": return "捕獲時";
-    case "on_capture_attempt": return "捕獲試行時";
-    case "on_captured": return "捕獲された時";
-    case "on_condition_met": return "条件達成時";
-    case "on_move": return "移動時";
-    case "on_other_piece_move": return "他駒移動時";
-    case "on_turn_start": return "ターン開始時";
-    case "on_turn_end": return "ターン終了時";
-    case "passive": return "常時";
-    default: return "その他";
+    case "after_move":
+      return "移動後";
+    case "on_capture":
+      return "捕獲時";
+    case "on_capture_attempt":
+      return "捕獲試行時";
+    case "on_captured":
+      return "捕獲された時";
+    case "on_condition_met":
+      return "条件達成時";
+    case "on_move":
+      return "移動時";
+    case "on_other_piece_move":
+      return "他駒移動時";
+    case "on_turn_start":
+      return "ターン開始時";
+    case "on_turn_end":
+      return "ターン終了時";
+    case "passive":
+      return "常時";
+    default:
+      return "その他";
   }
 }
 
 async function fetchPieceDetail(id: number): Promise<PieceDetailData> {
   const res = await fetch(`/api/pieces/${id}`, { cache: "no-store" });
-  const json = (await res.json()) as { success: boolean; data?: PieceDetailData; error?: string };
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: PieceDetailData;
+    error?: string;
+  };
   if (!res.ok || !json.success) {
     throw new Error(json.error ?? "取得に失敗しました");
   }
@@ -244,7 +305,6 @@ export function PieceDetailTemplate({ pieceId }: Props) {
                 })}
               </div>
             </div>
-
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">

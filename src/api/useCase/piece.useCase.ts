@@ -12,7 +12,11 @@ import {
   listPieces,
   updatePiece,
 } from "@/api/dao/piece.dao";
-import { createSignedImageUrl, deletePieceImage, uploadPieceImage } from "@/api/dao/pieceImage.dao";
+import {
+  createSignedImageUrl,
+  deletePieceImage,
+  uploadPieceImage,
+} from "@/api/dao/pieceImage.dao";
 import {
   insertSkillWithEffect,
   listSkillDraftOptions,
@@ -58,7 +62,9 @@ export type PieceDetailResponse = {
 };
 
 // 駒一覧取得（検索対応）
-export async function listPiecesUseCase(query?: string): Promise<PieceListResponse> {
+export async function listPiecesUseCase(
+  query?: string,
+): Promise<PieceListResponse> {
   const [pieces, movePatterns, skills, skillDraftOptions] = await Promise.all([
     listPieces(),
     listMovePatterns(),
@@ -104,7 +110,9 @@ export async function getPieceDetailUseCase(
 }
 
 // 駒作成
-export async function createPieceUseCase(input: PieceFormInput): Promise<PieceRecord> {
+export async function createPieceUseCase(
+  input: PieceFormInput,
+): Promise<PieceRecord> {
   const pieceCode = normalizePieceCode(input.pieceCode) ?? generatePieceCode();
 
   const skillId = input.skillDraft
@@ -113,14 +121,18 @@ export async function createPieceUseCase(input: PieceFormInput): Promise<PieceRe
 
   const movePatternId =
     input.moveVectors.length > 0
-      ? await insertMovePatternWithVectors(input.moveVectors, {
-          kanji: input.kanji,
-          name: input.name,
-        }, {
-          canJump: input.moveCanJump ?? false,
-          constraintsJson: input.moveConstraintsJson,
-          rules: input.moveRulesJson ?? undefined,
-        })
+      ? await insertMovePatternWithVectors(
+          input.moveVectors,
+          {
+            kanji: input.kanji,
+            name: input.name,
+          },
+          {
+            canJump: input.moveCanJump ?? false,
+            constraintsJson: input.moveConstraintsJson,
+            rules: input.moveRulesJson ?? undefined,
+          },
+        )
       : input.movePatternId;
 
   if (!movePatternId) throw new Error("move pattern is required");
@@ -179,14 +191,18 @@ export async function updatePieceUseCase(
 
   const movePatternId =
     input.moveVectors.length > 0
-      ? await insertMovePatternWithVectors(input.moveVectors, {
-          kanji: input.kanji,
-          name: input.name,
-        }, {
-          canJump: input.moveCanJump ?? false,
-          constraintsJson: input.moveConstraintsJson,
-          rules: input.moveRulesJson ?? undefined,
-        })
+      ? await insertMovePatternWithVectors(
+          input.moveVectors,
+          {
+            kanji: input.kanji,
+            name: input.name,
+          },
+          {
+            canJump: input.moveCanJump ?? false,
+            constraintsJson: input.moveConstraintsJson,
+            rules: input.moveRulesJson ?? undefined,
+          },
+        )
       : (input.movePatternId ?? existing.movePatternId);
 
   if (
@@ -203,7 +219,11 @@ export async function updatePieceUseCase(
     });
   }
 
-  let imageUpdate: { imageBucket: string; imageKey: string; imageVersion: number } | null = null;
+  let imageUpdate: {
+    imageBucket: string;
+    imageKey: string;
+    imageVersion: number;
+  } | null = null;
 
   if (input.imageFile) {
     const uploaded = await uploadPieceImage({

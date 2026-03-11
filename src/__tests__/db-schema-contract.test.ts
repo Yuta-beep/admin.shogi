@@ -38,4 +38,3 @@ describe("admin DAO DB schema contract", () => {
     expect(skillDao).toContain("trigger_timing");
   });
 });
-
