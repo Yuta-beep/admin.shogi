@@ -18,6 +18,7 @@ type FormState = {
   pieceId: number | null;
   kanji: string;
   name: string;
+  rarity: "N" | "R" | "SR" | "UR" | "SSR";
   moveDescriptionJa: string;
   movePatternId: string;
   moveVectorsJson: string;
@@ -289,6 +290,20 @@ export function PieceForm({
             placeholder="例: 歩兵"
             disabled={isSubmitting}
           />
+        </FormField>
+
+        <FormField label="レアリティ" required>
+          <SelectInput
+            value={form.rarity}
+            onChange={(e) => onChange("rarity", e.target.value)}
+            disabled={isSubmitting}
+          >
+            <option value="N">N</option>
+            <option value="R">R</option>
+            <option value="SR">SR</option>
+            <option value="UR">UR</option>
+            <option value="SSR">SSR</option>
+          </SelectInput>
         </FormField>
 
         <FormField label="移動説明（任意）">

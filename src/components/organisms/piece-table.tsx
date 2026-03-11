@@ -78,6 +78,7 @@ export function PieceTable({
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">漢字</th>
               <th className="px-3 py-2">名前</th>
+              <th className="px-3 py-2">レアリティ</th>
               <th className="px-3 py-2">スキル</th>
               <th className="px-3 py-2">画像</th>
               <th className="px-3 py-2">有効</th>
@@ -88,7 +89,7 @@ export function PieceTable({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-3 py-6 text-center text-slate-500"
                 >
                   読み込み中...
@@ -97,7 +98,7 @@ export function PieceTable({
             ) : pieces.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-3 py-6 text-center text-slate-500"
                 >
                   データがありません
@@ -109,6 +110,7 @@ export function PieceTable({
                   <td className="px-3 py-2">{piece.pieceId}</td>
                   <td className="px-3 py-2">{piece.kanji}</td>
                   <td className="px-3 py-2">{piece.name}</td>
+                  <td className="px-3 py-2">{piece.rarity}</td>
                   <td className="px-3 py-2">{piece.skillDesc ?? "-"}</td>
                   <td className="px-3 py-2">{piece.imageKey ? "あり" : "-"}</td>
                   <td className="px-3 py-2">

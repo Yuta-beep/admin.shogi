@@ -53,6 +53,21 @@ function readOptionalNumberString(formData: FormData, key: string) {
   return parsed;
 }
 
+function readRarity(formData: FormData): "N" | "R" | "SR" | "UR" | "SSR" {
+  const value = formData.get("rarity");
+  const rarity = typeof value === "string" ? value.trim().toUpperCase() : "N";
+  if (
+    rarity === "N" ||
+    rarity === "R" ||
+    rarity === "SR" ||
+    rarity === "UR" ||
+    rarity === "SSR"
+  ) {
+    return rarity;
+  }
+  throw new Error("rarity is invalid");
+}
+
 function parseSkillDraft(formData: FormData, hasSkill: boolean) {
   if (!hasSkill) return null;
 
@@ -239,6 +254,7 @@ export function parsePieceFormData(formData: FormData): PieceFormInput {
   const pieceCode = typeof pieceCodeRaw === "string" ? pieceCodeRaw.trim() : "";
   const kanji = readRequiredString(formData, "kanji");
   const name = readRequiredString(formData, "name");
+  const rarity = readRarity(formData);
   const moveDescriptionRaw = formData.get("moveDescriptionJa");
   const moveDescriptionJa =
     typeof moveDescriptionRaw === "string" && moveDescriptionRaw.trim() !== ""
@@ -283,6 +299,7 @@ export function parsePieceFormData(formData: FormData): PieceFormInput {
     pieceCode,
     kanji,
     name,
+    rarity,
     moveDescriptionJa,
     movePatternId,
     moveVectors,

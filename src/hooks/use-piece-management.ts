@@ -14,6 +14,7 @@ type PieceFormState = {
   pieceId: number | null;
   kanji: string;
   name: string;
+  rarity: "N" | "R" | "SR" | "UR" | "SSR";
   moveDescriptionJa: string;
   movePatternId: string;
   moveVectorsJson: string;
@@ -88,6 +89,7 @@ function toFormState(piece?: PieceRecord): PieceFormState {
     pieceId: piece?.pieceId ?? null,
     kanji: piece?.kanji ?? "",
     name: piece?.name ?? "",
+    rarity: piece?.rarity ?? "N",
     moveDescriptionJa: piece?.moveDescriptionJa ?? "",
     movePatternId: piece?.movePatternId ? String(piece.movePatternId) : "",
     moveVectorsJson: "",
@@ -124,6 +126,7 @@ function toEditFormState(detail: PieceDetailResponse): PieceFormState {
     pieceId: detail.piece.pieceId,
     kanji: detail.piece.kanji,
     name: detail.piece.name,
+    rarity: detail.piece.rarity ?? "N",
     moveDescriptionJa: detail.piece.moveDescriptionJa ?? "",
     movePatternId: String(detail.piece.movePatternId),
     moveVectorsJson: "",
@@ -177,6 +180,7 @@ function buildFormData(state: PieceFormState) {
   const formData = new FormData();
   formData.set("kanji", state.kanji.trim());
   formData.set("name", state.name.trim());
+  formData.set("rarity", state.rarity);
   formData.set("moveDescriptionJa", state.moveDescriptionJa.trim());
   formData.set("movePatternId", state.movePatternId);
   formData.set("moveVectorsJson", state.moveVectorsJson);

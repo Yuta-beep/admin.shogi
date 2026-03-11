@@ -7,6 +7,7 @@ function createBaseFormData() {
   formData.set("pieceCode", " P001 ");
   formData.set("kanji", "歩");
   formData.set("name", "歩兵");
+  formData.set("rarity", "N");
   formData.set("moveDescriptionJa", "1マス前進");
   formData.set("movePatternId", "1");
   formData.set("moveCanJump", "true");
@@ -26,6 +27,7 @@ describe("parsePieceFormData", () => {
     expect(parsed.pieceCode).toBe("P001");
     expect(parsed.kanji).toBe("歩");
     expect(parsed.name).toBe("歩兵");
+    expect(parsed.rarity).toBe("N");
     expect(parsed.moveDescriptionJa).toBe("1マス前進");
     expect(parsed.movePatternId).toBe(1);
     expect(parsed.moveVectors).toEqual([]);
@@ -156,6 +158,13 @@ describe("parsePieceFormData", () => {
     expect(() => parsePieceFormData(formData)).toThrow(
       "moveVectorsJson[0] maxStep must be a positive integer",
     );
+  });
+
+  it("throws when rarity is invalid", () => {
+    const formData = createBaseFormData();
+    formData.set("rarity", "LEGEND");
+
+    expect(() => parsePieceFormData(formData)).toThrow("rarity is invalid");
   });
 
   it("parses non-empty image file", () => {
