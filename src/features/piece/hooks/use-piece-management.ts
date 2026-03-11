@@ -3,23 +3,44 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   MovePatternOption,
+  MovePatternVector,
   PieceRecord,
+  SkillEffectRecord,
+  SkillDraftOptions,
   SkillOption,
 } from "@/features/piece/domain/piece.types";
 
 type PieceFormState = {
   pieceId: number | null;
-  pieceCode: string;
   kanji: string;
   name: string;
   movePatternId: string;
+  moveVectorsJson: string;
+  hasSkill: boolean;
   skillId: string;
-  imageSource: "supabase" | "s3";
+  skillDesc: string;
+  skillEffectType: string;
+  skillTargetRule: string;
+  skillTargetAdjacentN: string;
+  skillTriggerTiming: string;
+  skillValueText: string;
+  skillValueNum: string;
+  skillProcChance: string;
+  skillDurationTurns: string;
+  skillRadius: string;
+  skillParamsJson: string;
   imageVersion: string;
   isActive: boolean;
   publishedAt: string;
   unpublishedAt: string;
   imageFile: File | null;
+};
+
+type PieceDetailResponse = {
+  piece: PieceRecord;
+  skillEffects: SkillEffectRecord[];
+  moveVectors: MovePatternVector[];
+  imageUrl: string | null;
 };
 
 function toDateTimeLocal(value: string | null) {
@@ -37,13 +58,23 @@ function toDateTimeLocal(value: string | null) {
 function toFormState(piece?: PieceRecord): PieceFormState {
   return {
     pieceId: piece?.pieceId ?? null,
-    pieceCode: piece?.pieceCode ?? "",
     kanji: piece?.kanji ?? "",
     name: piece?.name ?? "",
     movePatternId: piece?.movePatternId ? String(piece.movePatternId) : "",
+    moveVectorsJson: "",
+    hasSkill: Boolean(piece?.skillId),
     skillId: piece?.skillId ? String(piece.skillId) : "",
-    imageSource:
-      (piece?.imageSource as "supabase" | "s3" | undefined) ?? "supabase",
+    skillDesc: "",
+    skillEffectType: "",
+    skillTargetRule: "",
+    skillTargetAdjacentN: "",
+    skillTriggerTiming: "",
+    skillValueText: "",
+    skillValueNum: "",
+    skillProcChance: "",
+    skillDurationTurns: "",
+    skillRadius: "",
+    skillParamsJson: "",
     imageVersion: String(piece?.imageVersion ?? 1),
     isActive: piece?.isActive ?? true,
     publishedAt: toDateTimeLocal(piece?.publishedAt ?? null),
@@ -52,14 +83,79 @@ function toFormState(piece?: PieceRecord): PieceFormState {
   };
 }
 
+function toEditFormState(detail: PieceDetailResponse): PieceFormState {
+  const firstEffect = detail.skillEffects[0] ?? null;
+  const targetRule = firstEffect?.targetRule ?? "";
+  const adjacentMatch = targetRule.match(/^adjacent_(\d+)$/);
+  const isAdjacentCustom = Boolean(adjacentMatch);
+
+  return {
+    pieceId: detail.piece.pieceId,
+    kanji: detail.piece.kanji,
+    name: detail.piece.name,
+    movePatternId: String(detail.piece.movePatternId),
+    moveVectorsJson: "",
+    hasSkill: Boolean(detail.piece.skillId),
+    skillId: detail.piece.skillId ? String(detail.piece.skillId) : "",
+    skillDesc: detail.piece.skillDesc ?? "",
+    skillEffectType: firstEffect?.effectType ?? "",
+    skillTargetRule: isAdjacentCustom ? "__adjacent_custom__" : targetRule,
+    skillTargetAdjacentN: adjacentMatch?.[1] ?? "",
+    skillTriggerTiming: firstEffect?.triggerTiming ?? "",
+    skillValueText: firstEffect?.valueText ?? "",
+    skillValueNum:
+      firstEffect?.valueNum !== null && firstEffect?.valueNum !== undefined
+        ? String(firstEffect.valueNum)
+        : "",
+    skillProcChance:
+      firstEffect?.procChance !== null && firstEffect?.procChance !== undefined
+        ? String(firstEffect.procChance)
+        : "",
+    skillDurationTurns:
+      firstEffect?.durationTurns !== null &&
+      firstEffect?.durationTurns !== undefined
+        ? String(firstEffect.durationTurns)
+        : "",
+    skillRadius:
+      firstEffect?.radius !== null && firstEffect?.radius !== undefined
+        ? String(firstEffect.radius)
+        : "",
+    skillParamsJson: "",
+    imageVersion: String(detail.piece.imageVersion ?? 1),
+    isActive: detail.piece.isActive ?? true,
+    publishedAt: toDateTimeLocal(detail.piece.publishedAt ?? null),
+    unpublishedAt: toDateTimeLocal(detail.piece.unpublishedAt ?? null),
+    imageFile: null,
+  };
+}
+
 function buildFormData(state: PieceFormState) {
   const formData = new FormData();
-  formData.set("pieceCode", state.pieceCode.trim());
   formData.set("kanji", state.kanji.trim());
   formData.set("name", state.name.trim());
   formData.set("movePatternId", state.movePatternId);
+  formData.set("moveVectorsJson", state.moveVectorsJson);
+  formData.set("hasSkill", String(state.hasSkill));
   formData.set("skillId", state.skillId);
-  formData.set("imageSource", state.imageSource);
+  formData.set("skillDesc", state.skillDesc.trim());
+  formData.set("skillEffectType", state.skillEffectType.trim());
+  let normalizedTargetRule = state.skillTargetRule.trim();
+  if (state.skillTargetRule === "__adjacent_custom__") {
+    const adjacentN = Number(state.skillTargetAdjacentN.trim());
+    if (!Number.isInteger(adjacentN) || adjacentN <= 0) {
+      throw new Error("周囲nマスの数値は1以上の整数で入力してください");
+    }
+    normalizedTargetRule = `adjacent_${adjacentN}`;
+  }
+  formData.set("skillTargetRule", normalizedTargetRule);
+  formData.set("skillTriggerTiming", state.skillTriggerTiming.trim());
+  formData.set("skillValueText", state.skillValueText.trim());
+  formData.set("skillValueNum", state.skillValueNum.trim());
+  formData.set("skillProcChance", state.skillProcChance.trim());
+  formData.set("skillDurationTurns", state.skillDurationTurns.trim());
+  formData.set("skillRadius", state.skillRadius.trim());
+  formData.set("skillParamsJson", state.skillParamsJson.trim());
+  formData.set("imageSource", "supabase");
   formData.set("imageVersion", state.imageVersion || "1");
   formData.set("isActive", String(state.isActive));
   formData.set("publishedAt", state.publishedAt);
@@ -85,33 +181,53 @@ export function usePieceManagement() {
   const [pieces, setPieces] = useState<PieceRecord[]>([]);
   const [movePatterns, setMovePatterns] = useState<MovePatternOption[]>([]);
   const [skills, setSkills] = useState<SkillOption[]>([]);
+  const [skillDraftOptions, setSkillDraftOptions] = useState<SkillDraftOptions>(
+    {
+      effectTypes: [],
+      targetRules: [],
+      triggerTimings: [],
+    },
+  );
   const [form, setForm] = useState<PieceFormState>(toFormState());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [queryInput, setQueryInput] = useState("");
+  const [query, setQuery] = useState("");
+
+  const fetchList = useCallback(async (nextQuery: string) => {
+    const params = new URLSearchParams();
+    if (nextQuery.trim() !== "") {
+      params.set("query", nextQuery.trim());
+    }
+    const path =
+      params.size > 0 ? `/api/pieces?${params.toString()}` : "/api/pieces";
+    const res = await fetch(path, { cache: "no-store" });
+    return toJson<{
+      pieces: PieceRecord[];
+      movePatterns: MovePatternOption[];
+      skills: SkillOption[];
+      skillDraftOptions: SkillDraftOptions;
+    }>(res);
+  }, []);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/pieces", { cache: "no-store" });
-      const json = await toJson<{
-        pieces: PieceRecord[];
-        movePatterns: MovePatternOption[];
-        skills: SkillOption[];
-      }>(res);
-
+      const json = await fetchList(query);
       setPieces(json.pieces);
       setMovePatterns(json.movePatterns);
       setSkills(json.skills);
+      setSkillDraftOptions(json.skillDraftOptions);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchList, query]);
 
   useEffect(() => {
     void refresh();
@@ -130,10 +246,61 @@ export function usePieceManagement() {
     setForm(toFormState());
   }, []);
 
+  const search = useCallback(async () => {
+    const nextQuery = queryInput.trim();
+    setQuery(nextQuery);
+    setIsLoading(true);
+    setError(null);
+    try {
+      const json = await fetchList(nextQuery);
+      setPieces(json.pieces);
+      setMovePatterns(json.movePatterns);
+      setSkills(json.skills);
+      setSkillDraftOptions(json.skillDraftOptions);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchList, queryInput]);
+
+  const resetSearch = useCallback(async () => {
+    setQueryInput("");
+    setQuery("");
+    setIsLoading(true);
+    setError(null);
+    try {
+      const json = await fetchList("");
+      setPieces(json.pieces);
+      setMovePatterns(json.movePatterns);
+      setSkills(json.skills);
+      setSkillDraftOptions(json.skillDraftOptions);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchList]);
+
   const startEdit = useCallback((piece: PieceRecord) => {
     setForm(toFormState(piece));
     setSuccessMessage(null);
     setError(null);
+  }, []);
+
+  const startEditById = useCallback(async (pieceId: number) => {
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch(`/api/pieces/${pieceId}`, { cache: "no-store" });
+      const detail = await toJson<PieceDetailResponse>(res);
+      setForm(toEditFormState(detail));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const submit = useCallback(async () => {
@@ -196,14 +363,21 @@ export function usePieceManagement() {
     pieces,
     movePatterns,
     skills,
+    skillDraftOptions,
     form,
     isEditMode,
     isLoading,
     isSubmitting,
     error,
     successMessage,
+    queryInput,
+    query,
     onChange,
+    setQueryInput,
+    search,
+    resetSearch,
     startEdit,
+    startEditById,
     resetForm,
     submit,
     remove,

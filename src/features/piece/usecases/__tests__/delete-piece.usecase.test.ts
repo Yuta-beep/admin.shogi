@@ -9,7 +9,7 @@ const existingPiece = {
   movePatternId: 1,
   movePatternName: "pawn",
   skillId: null,
-  skillName: null,
+  skillDesc: null,
   imageSource: "supabase",
   imageBucket: "piece-images",
   imageKey: "pieces/old.png",

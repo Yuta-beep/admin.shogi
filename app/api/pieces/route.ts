@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { createPieceUseCase } from "@/features/piece/usecases/create-piece.usecase";
 import { listPiecesUseCase } from "@/features/piece/usecases/list-pieces.usecase";
+import { pieceSearchUseCase } from "@/features/piece/usecases/piece-search.usecase";
 import { parsePieceFormData } from "@/features/piece/utils/piece-form-parser";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const data = await listPiecesUseCase();
+    const { searchParams } = new URL(request.url);
+    const query = (searchParams.get("query") ?? "").trim();
+    const data = query
+      ? await pieceSearchUseCase(query)
+      : await listPiecesUseCase();
     return NextResponse.json(data);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal error";
