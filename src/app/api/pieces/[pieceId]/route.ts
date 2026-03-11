@@ -1,5 +1,4 @@
 import {
-  createPieceUseCase,
   deletePieceUseCase,
   getPieceDetailUseCase,
   updatePieceUseCase,
