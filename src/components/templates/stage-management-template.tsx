@@ -16,9 +16,11 @@ export function StageManagementTemplate({ mode }: Props) {
   const {
     stages,
     pieceOptions,
+    rewardOptions,
     pieceById,
     form,
     placements,
+    rewards,
     selectedPieceId,
     isLoading,
     isSubmitting,
@@ -34,6 +36,9 @@ export function StageManagementTemplate({ mode }: Props) {
     setSelectedPieceId,
     setPlacementAt,
     clearPlacements,
+    addReward,
+    removeReward,
+    changeReward,
     submit,
   } = useStageManagement();
   const isListMode = mode === "list";
@@ -81,7 +86,9 @@ export function StageManagementTemplate({ mode }: Props) {
         <StageForm
           form={form}
           placements={placements}
+          rewards={rewards}
           pieceOptions={pieceOptions}
+          rewardOptions={rewardOptions}
           pieceById={pieceById}
           selectedPieceId={selectedPieceId}
           isSubmitting={isSubmitting}
@@ -89,6 +96,9 @@ export function StageManagementTemplate({ mode }: Props) {
           onSelectPieceId={setSelectedPieceId}
           onSetPlacement={setPlacementAt}
           onClearPlacements={clearPlacements}
+          onAddReward={addReward}
+          onRemoveReward={removeReward}
+          onChangeReward={changeReward}
           onSubmit={() => {
             void submit();
           }}

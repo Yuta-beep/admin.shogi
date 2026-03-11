@@ -31,6 +31,8 @@ describe("admin DAO DB schema contract", () => {
 
     expect(stageDao).toContain('.from("m_stage")');
     expect(stageDao).toContain('.from("m_stage_initial_placement")');
+    expect(stageDao).toContain('.from("m_stage_reward")');
+    expect(stageDao).toContain('.from("m_reward")');
     expect(stageDao).toContain('.from("m_piece")');
 
     expect(skillDao).toContain('.from("m_skill")');

@@ -8,7 +8,7 @@ import {
   created,
   badRequest,
 } from "@/api/helpers/apiResponse";
-import { StagePlacementInput } from "@/types/stage";
+import { StagePlacementInput, StageRewardInput } from "@/types/stage";
 
 export const runtime = "nodejs";
 
@@ -65,6 +65,22 @@ function hasDuplicateBoardCell(placements: StagePlacementInput[]) {
   return false;
 }
 
+function isValidReward(value: unknown): value is StageRewardInput {
+  if (!value || typeof value !== "object") return false;
+  const obj = value as Record<string, unknown>;
+  const rewardId = Number(obj.rewardId);
+  const quantity = Number(obj.quantity);
+  const rewardTiming = obj.rewardTiming;
+
+  return (
+    Number.isInteger(rewardId) &&
+    rewardId > 0 &&
+    (rewardTiming === "first_clear" || rewardTiming === "clear") &&
+    Number.isInteger(quantity) &&
+    quantity > 0
+  );
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -110,6 +126,15 @@ export async function POST(request: Request) {
       return badRequest("placements contain duplicate board cells");
     }
 
+    const rewardsRaw = Array.isArray(body.rewards) ? body.rewards : [];
+    if (!rewardsRaw.every((reward) => isValidReward(reward))) {
+      return badRequest(
+        "rewards must contain rewardId, rewardTiming(first_clear|clear), quantity(>=1)",
+      );
+    }
+
+    const rewards = rewardsRaw as StageRewardInput[];
+
     const stage = await createStageUseCase({
       stageNo,
       stageName,
@@ -125,6 +150,7 @@ export async function POST(request: Request) {
       publishedAt: asIsoOrNull(body.publishedAt),
       unpublishedAt: asIsoOrNull(body.unpublishedAt),
       placements,
+      rewards,
     });
 
     return created({ stage });

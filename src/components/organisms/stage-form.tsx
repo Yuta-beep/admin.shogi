@@ -5,7 +5,7 @@ import { CheckboxInput } from "@/components/atoms/checkbox-input";
 import { SelectInput } from "@/components/atoms/select-input";
 import { TextInput } from "@/components/atoms/text-input";
 import { FormField } from "@/components/molecules/form-field";
-import { PieceOption } from "@/api/model/stage";
+import { PieceOption, RewardOption } from "@/api/model/stage";
 import { StagePlacementInput } from "@/types/stage";
 
 type FormState = {
@@ -23,7 +23,13 @@ type FormState = {
 type Props = {
   form: FormState;
   placements: StagePlacementInput[];
+  rewards: {
+    rewardId: string;
+    rewardTiming: "first_clear" | "clear";
+    quantity: string;
+  }[];
   pieceOptions: PieceOption[];
+  rewardOptions: RewardOption[];
   pieceById: Record<number, PieceOption>;
   selectedPieceId: number | null;
   isSubmitting: boolean;
@@ -31,6 +37,13 @@ type Props = {
   onSelectPieceId: (pieceId: number | null) => void;
   onSetPlacement: (rowNo: number, colNo: number) => void;
   onClearPlacements: () => void;
+  onAddReward: () => void;
+  onRemoveReward: (index: number) => void;
+  onChangeReward: (
+    index: number,
+    key: "rewardId" | "rewardTiming" | "quantity",
+    value: string,
+  ) => void;
   onSubmit: () => void;
 };
 
@@ -44,7 +57,9 @@ const AI_ROW_MAX = 8;
 export function StageForm({
   form,
   placements,
+  rewards,
   pieceOptions,
+  rewardOptions,
   pieceById,
   selectedPieceId,
   isSubmitting,
@@ -52,6 +67,9 @@ export function StageForm({
   onSelectPieceId,
   onSetPlacement,
   onClearPlacements,
+  onAddReward,
+  onRemoveReward,
+  onChangeReward,
   onSubmit,
 }: Props) {
   return (
@@ -230,6 +248,82 @@ export function StageForm({
             配置クリア
           </Button>
         </div>
+      </div>
+
+      <div className="mt-8 rounded-lg border border-slate-200 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-slate-900">報酬設定</h3>
+          <Button
+            variant="neutral"
+            className="h-8 px-3 text-xs"
+            onClick={onAddReward}
+            disabled={isSubmitting}
+          >
+            報酬を追加
+          </Button>
+        </div>
+        <p className="mb-3 text-xs text-slate-500">
+          クリア報酬（初回 / 2回目以降）を設定できます。
+        </p>
+
+        {rewards.length === 0 ? (
+          <p className="text-sm text-slate-500">報酬が未設定です。</p>
+        ) : (
+          <div className="space-y-2">
+            {rewards.map((reward, index) => (
+              <div
+                key={`reward-${index}`}
+                className="grid grid-cols-1 gap-2 rounded border border-slate-200 p-2 md:grid-cols-[160px_1fr_120px_110px]"
+              >
+                <SelectInput
+                  value={reward.rewardTiming}
+                  onChange={(e) =>
+                    onChangeReward(index, "rewardTiming", e.target.value)
+                  }
+                  disabled={isSubmitting}
+                >
+                  <option value="first_clear">初回クリア</option>
+                  <option value="clear">2回目以降</option>
+                </SelectInput>
+
+                <SelectInput
+                  value={reward.rewardId}
+                  onChange={(e) =>
+                    onChangeReward(index, "rewardId", e.target.value)
+                  }
+                  disabled={isSubmitting}
+                >
+                  <option value="">報酬を選択</option>
+                  {rewardOptions.map((option) => (
+                    <option key={option.rewardId} value={option.rewardId}>
+                      {option.rewardType === "currency" ? "通貨" : "駒"}:{" "}
+                      {option.rewardName}
+                    </option>
+                  ))}
+                </SelectInput>
+
+                <TextInput
+                  type="number"
+                  min={1}
+                  value={reward.quantity}
+                  onChange={(e) =>
+                    onChangeReward(index, "quantity", e.target.value)
+                  }
+                  disabled={isSubmitting}
+                />
+
+                <Button
+                  variant="danger"
+                  className="h-10"
+                  onClick={() => onRemoveReward(index)}
+                  disabled={isSubmitting}
+                >
+                  削除
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-6">
