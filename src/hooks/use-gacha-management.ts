@@ -129,6 +129,7 @@ function toInput(
     imageBucket: form.imageBucket.trim(),
     imageKey: form.imageKey.trim(),
     imageVersion: Number(form.imageVersion),
+    imageAspectRatio: "3:1",
     isActive: form.isActive,
     publishedAt: form.publishedAt,
     unpublishedAt: form.unpublishedAt,

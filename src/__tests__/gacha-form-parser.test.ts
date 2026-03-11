@@ -18,6 +18,7 @@ function createBaseBody(): Record<string, unknown> {
     imageBucket: "gacha-images",
     imageKey: "assets/gacha/hihen.png",
     imageVersion: 1,
+    imageAspectRatio: "3:1",
     isActive: true,
     publishedAt: "2026-03-11T00:00:00+09:00",
     unpublishedAt: "2026-04-01T23:59:59+09:00",
@@ -63,6 +64,15 @@ describe("parseGachaFormBody", () => {
 
     expect(() => parseGachaFormBody(body)).toThrow(
       "pawnCost + goldCost must be greater than 0",
+    );
+  });
+
+  it("throws when imageAspectRatio is not 3:1", () => {
+    const body = createBaseBody();
+    body.imageAspectRatio = "16:9";
+
+    expect(() => parseGachaFormBody(body)).toThrow(
+      "imageAspectRatio must be 3:1",
     );
   });
 

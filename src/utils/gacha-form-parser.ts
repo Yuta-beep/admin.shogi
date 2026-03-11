@@ -101,6 +101,11 @@ export function parseGachaFormBody(
     throw new Error("pawnCost + goldCost must be greater than 0");
   }
 
+  const imageAspectRatio = asString(body.imageAspectRatio).trim();
+  if (imageAspectRatio !== "3:1") {
+    throw new Error("imageAspectRatio must be 3:1");
+  }
+
   const targetPieces = parseTargetPieces(body.targetPieces);
   if (targetPieces.length === 0) {
     throw new Error("targetPieces is required");

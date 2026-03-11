@@ -200,6 +200,13 @@ export function GachaForm({
           />
         </FormField>
 
+        <FormField label="画像比率（固定）">
+          <TextInput value="3:1" disabled />
+          <p className="mt-1 text-xs text-amber-700">
+            ガチャ画像は横:縦 = 3:1 で作成してください。3:1以外は登録できません。
+          </p>
+        </FormField>
+
         <FormField label="公開開始日時">
           <TextInput
             type="datetime-local"
