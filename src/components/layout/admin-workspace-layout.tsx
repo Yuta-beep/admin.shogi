@@ -10,6 +10,7 @@ type Props = {
 
 const navItems: { href: string; label: string }[] = [
   { href: "/pieces", label: "駒管理" },
+  { href: "/gachas", label: "ガチャ管理" },
   { href: "/stages", label: "ステージ管理" },
 ];
 
