@@ -9,20 +9,22 @@ function readUint16BE(bytes: Uint8Array, offset: number) {
 
 function readUint32BE(bytes: Uint8Array, offset: number) {
   return (
-    (bytes[offset] << 24) |
-    (bytes[offset + 1] << 16) |
-    (bytes[offset + 2] << 8) |
-    bytes[offset + 3]
-  ) >>> 0;
+    ((bytes[offset] << 24) |
+      (bytes[offset + 1] << 16) |
+      (bytes[offset + 2] << 8) |
+      bytes[offset + 3]) >>>
+    0
+  );
 }
 
 function readUint32LE(bytes: Uint8Array, offset: number) {
   return (
-    bytes[offset] |
-    (bytes[offset + 1] << 8) |
-    (bytes[offset + 2] << 16) |
-    (bytes[offset + 3] << 24)
-  ) >>> 0;
+    (bytes[offset] |
+      (bytes[offset + 1] << 8) |
+      (bytes[offset + 2] << 16) |
+      (bytes[offset + 3] << 24)) >>>
+    0
+  );
 }
 
 function detectPngDimensions(bytes: Uint8Array): ImageDimensions | null {
@@ -156,7 +158,9 @@ function detectWebpDimensions(bytes: Uint8Array): ImageDimensions | null {
   return null;
 }
 
-export function detectImageDimensions(bytes: Uint8Array): ImageDimensions | null {
+export function detectImageDimensions(
+  bytes: Uint8Array,
+): ImageDimensions | null {
   return (
     detectPngDimensions(bytes) ??
     detectJpegDimensions(bytes) ??
