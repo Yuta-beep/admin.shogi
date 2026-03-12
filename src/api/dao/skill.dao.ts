@@ -148,13 +148,13 @@ export async function insertSkillWithEffect(
       skill_desc: input.skillDesc,
       trigger_timing: input.triggerTiming,
       is_active: true,
-      skill_type: "passive",
+      skill_type: "active_or_passive",
       target_rule: input.targetRule,
-      effect_summary_type: input.effectType,
+      effect_summary_type: "scripted",
       proc_chance: input.procChance,
       duration_turns: input.durationTurns,
       params_json: input.paramsJson ?? {},
-      parse_status: "manual_admin",
+      parse_status: "rule_only_v2",
     })
     .select("skill_id")
     .single();
