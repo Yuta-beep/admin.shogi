@@ -117,11 +117,15 @@ function parseSkillConditions(formData: FormData) {
     const row = item as Record<string, unknown>;
     return {
       clientKey:
-        typeof row.clientKey === "string" ? row.clientKey : `condition_${index}`,
+        typeof row.clientKey === "string"
+          ? row.clientKey
+          : `condition_${index}`,
       group: typeof row.group === "string" ? row.group : "",
       type: typeof row.type === "string" ? row.type : "",
       paramsJson:
-        typeof row.paramsJson === "string" ? row.paramsJson : JSON.stringify({}),
+        typeof row.paramsJson === "string"
+          ? row.paramsJson
+          : JSON.stringify({}),
     };
   });
 }
@@ -151,12 +155,13 @@ function parseSkillEffects(formData: FormData) {
         typeof row.clientKey === "string" ? row.clientKey : `effect_${index}`,
       group: typeof row.group === "string" ? row.group : "",
       type: typeof row.type === "string" ? row.type : "",
-      targetGroup:
-        typeof row.targetGroup === "string" ? row.targetGroup : "",
+      targetGroup: typeof row.targetGroup === "string" ? row.targetGroup : "",
       targetSelector:
         typeof row.targetSelector === "string" ? row.targetSelector : "",
       paramsJson:
-        typeof row.paramsJson === "string" ? row.paramsJson : JSON.stringify({}),
+        typeof row.paramsJson === "string"
+          ? row.paramsJson
+          : JSON.stringify({}),
     };
   });
 }

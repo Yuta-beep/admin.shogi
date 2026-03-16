@@ -35,7 +35,9 @@ function createMockClient(results: Record<string, TableResult>) {
             },
             maybeSingle() {
               return Promise.resolve({
-                data: Array.isArray(result.data) ? result.data[0] ?? null : null,
+                data: Array.isArray(result.data)
+                  ? (result.data[0] ?? null)
+                  : null,
                 error: null,
               });
             },
@@ -101,9 +103,9 @@ describe("skill.dao v2", () => {
     expect(registry.version).toBe("skill-registry-v2-db");
     expect(registry.implementationKinds[0]?.code).toBe("primitive");
     expect(registry.registries.trigger.groups[0]?.groupCode).toBe("event_move");
-    expect(
-      registry.registries.trigger.groups[0]?.options[0]?.optionCode,
-    ).toBe("after_move");
+    expect(registry.registries.trigger.groups[0]?.options[0]?.optionCode).toBe(
+      "after_move",
+    );
   });
 
   it("lists v2 skills with trigger/implementation/effect counts", async () => {

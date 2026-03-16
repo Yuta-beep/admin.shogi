@@ -124,7 +124,9 @@ describe("piece.useCase v2", () => {
         effects: [],
         legacyEffects: [],
       }),
-      listMoveVectorsByMovePatternId: async () => [{ dx: 0, dy: -1, maxStep: 1 }],
+      listMoveVectorsByMovePatternId: async () => [
+        { dx: 0, dy: -1, maxStep: 1 },
+      ],
       getMovePatternDetailById: async () => null,
       createSignedImageUrl: async () => null,
       insertSkillDefinitionV2: async () => 1,
