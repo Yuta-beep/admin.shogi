@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { Button } from "@/components/atoms/button";
 import { PieceRecord } from "@/api/model/piece";
+import {
+  getRemainingSkillStatus,
+  remainingSkillStatusClassName,
+} from "@/utils/remaining-skill-status";
 
 type Props = {
   pieces: PieceRecord[];
@@ -80,6 +84,7 @@ export function PieceTable({
               <th className="px-3 py-2">名前</th>
               <th className="px-3 py-2">レアリティ</th>
               <th className="px-3 py-2">スキル</th>
+              <th className="px-3 py-2">残件状態</th>
               <th className="px-3 py-2">画像</th>
               <th className="px-3 py-2">有効</th>
               <th className="px-3 py-2">操作</th>
@@ -89,7 +94,7 @@ export function PieceTable({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-3 py-6 text-center text-slate-500"
                 >
                   読み込み中...
@@ -98,54 +103,68 @@ export function PieceTable({
             ) : pieces.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-3 py-6 text-center text-slate-500"
                 >
                   データがありません
                 </td>
               </tr>
             ) : (
-              pieces.map((piece) => (
-                <tr key={piece.pieceId} className="border-t border-slate-200">
-                  <td className="px-3 py-2">{piece.pieceId}</td>
-                  <td className="px-3 py-2">{piece.kanji}</td>
-                  <td className="px-3 py-2">{piece.name}</td>
-                  <td className="px-3 py-2">{piece.rarity}</td>
-                  <td className="px-3 py-2">{piece.skillDesc ?? "-"}</td>
-                  <td className="px-3 py-2">{piece.imageKey ? "あり" : "-"}</td>
-                  <td className="px-3 py-2">
-                    {piece.isActive ? "有効" : "無効"}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="neutral"
-                        onClick={() => onView(piece)}
-                        disabled={isSubmitting}
-                        className="h-8 px-3 text-xs"
-                      >
-                        詳細
-                      </Button>
-                      <Button
-                        variant="neutral"
-                        onClick={() => onEdit(piece)}
-                        disabled={isSubmitting}
-                        className="h-8 px-3 text-xs"
-                      >
-                        編集
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() => onDelete(piece)}
-                        disabled={isSubmitting}
-                        className="h-8 px-3 text-xs"
-                      >
-                        削除
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              pieces.map((piece) => {
+                const remainingStatus = getRemainingSkillStatus(piece.skillId);
+                return (
+                  <tr key={piece.pieceId} className="border-t border-slate-200">
+                    <td className="px-3 py-2">{piece.pieceId}</td>
+                    <td className="px-3 py-2">{piece.kanji}</td>
+                    <td className="px-3 py-2">{piece.name}</td>
+                    <td className="px-3 py-2">{piece.rarity}</td>
+                    <td className="px-3 py-2">{piece.skillDesc ?? "-"}</td>
+                    <td className="px-3 py-2">
+                      {remainingStatus ? (
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${remainingSkillStatusClassName(remainingStatus.state)}`}
+                        >
+                          {remainingStatus.label}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-3 py-2">{piece.imageKey ? "あり" : "-"}</td>
+                    <td className="px-3 py-2">
+                      {piece.isActive ? "有効" : "無効"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="neutral"
+                          onClick={() => onView(piece)}
+                          disabled={isSubmitting}
+                          className="h-8 px-3 text-xs"
+                        >
+                          詳細
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          onClick={() => onEdit(piece)}
+                          disabled={isSubmitting}
+                          className="h-8 px-3 text-xs"
+                        >
+                          編集
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => onDelete(piece)}
+                          disabled={isSubmitting}
+                          className="h-8 px-3 text-xs"
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
