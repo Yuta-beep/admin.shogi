@@ -100,63 +100,126 @@ describe("parsePieceFormData", () => {
     );
   });
 
-  it("builds skillDraft when hasSkill=true", () => {
+  it("uses selected skillId when hasSkill=true and skillMode=existing", () => {
     const formData = createBaseFormData();
     formData.set("hasSkill", "true");
-    formData.set("skillDesc", "敵を凍結");
-    formData.set("skillEffectType", "freeze");
-    formData.set("skillTargetRule", "front_enemy");
-    formData.set("skillTriggerTiming", "on_attack");
-    formData.set("skillValueText", "slow");
-    formData.set("skillValueNum", "2");
-    formData.set("skillProcChance", "0.5");
-    formData.set("skillDurationTurns", "3");
-    formData.set("skillRadius", "1");
-    formData.set("skillParamsJson", '{"element":"ice"}');
+    formData.set("skillMode", "existing");
+    formData.set("skillId", "65");
 
     const parsed = parsePieceFormData(formData);
 
+    expect(parsed.skillId).toBe(65);
+    expect(parsed.skillDraft).toBeNull();
+  });
+
+  it("builds v2 skillDraft when hasSkill=true and skillMode=draft", () => {
+    const formData = createBaseFormData();
+    formData.set("hasSkill", "true");
+    formData.set("skillMode", "draft");
+    formData.set("skillDesc", "移動時に周囲の敵駒を押し出す");
+    formData.set("implementationKind", "primitive");
+    formData.set("skillTriggerGroup", "event_move");
+    formData.set("skillTriggerType", "after_move");
+    formData.set("scriptHook", "");
+    formData.set("skillTagsCsv", "move_trigger,adjacent");
+    formData.set(
+      "skillConditionsJson",
+      JSON.stringify([
+        {
+          clientKey: "c1",
+          group: "probability",
+          type: "chance_roll",
+          paramsJson: '{"procChance":0.2}',
+        },
+      ]),
+    );
+    formData.set(
+      "skillEffectsJson",
+      JSON.stringify([
+        {
+          clientKey: "e1",
+          group: "piece_position",
+          type: "forced_move",
+          targetGroup: "adjacent",
+          targetSelector: "adjacent_enemy",
+          paramsJson: '{"movementRule":"push_away","radius":1}',
+        },
+      ]),
+    );
+
+    const parsed = parsePieceFormData(formData);
+
+    expect(parsed.skillId).toBeNull();
     expect(parsed.skillDraft).toEqual({
-      skillDesc: "敵を凍結",
-      effectType: "freeze",
-      targetRule: "front_enemy",
-      triggerTiming: "on_attack",
-      valueText: "slow",
-      valueNum: 2,
-      procChance: 0.5,
-      durationTurns: 3,
-      radius: 1,
-      paramsJson: { element: "ice" },
+      skillDesc: "移動時に周囲の敵駒を押し出す",
+      implementationKind: "primitive",
+      trigger: {
+        group: "event_move",
+        type: "after_move",
+      },
+      conditions: [
+        {
+          order: 1,
+          group: "probability",
+          type: "chance_roll",
+          paramsJson: { procChance: 0.2 },
+        },
+      ],
+      effects: [
+        {
+          order: 1,
+          group: "piece_position",
+          type: "forced_move",
+          target: {
+            group: "adjacent",
+            selector: "adjacent_enemy",
+          },
+          paramsJson: {
+            movementRule: "push_away",
+            radius: 1,
+          },
+        },
+      ],
+      scriptHook: null,
+      tags: ["move_trigger", "adjacent"],
+      sourceKind: "manual",
+      sourceFile: null,
+      sourceFunction: null,
     });
   });
 
-  it("throws when hasSkill=true and required skill field is missing", () => {
+  it("allows script_hook skill without effects", () => {
     const formData = createBaseFormData();
     formData.set("hasSkill", "true");
-    formData.set("skillEffectType", "freeze");
-    formData.set("skillTargetRule", "front_enemy");
-    formData.set("skillTriggerTiming", "on_attack");
-    formData.set("skillValueText", "slow");
-    formData.set("skillValueNum", "2");
-    formData.set("skillProcChance", "0.5");
-    formData.set("skillDurationTurns", "3");
-    formData.set("skillRadius", "1");
+    formData.set("skillMode", "draft");
+    formData.set("skillDesc", "専用フック");
+    formData.set("implementationKind", "script_hook");
+    formData.set("skillTriggerGroup", "special");
+    formData.set("skillTriggerType", "script_hook");
+    formData.set("scriptHook", "reflect_until_blocked");
+    formData.set("skillConditionsJson", "[]");
+    formData.set("skillEffectsJson", "[]");
 
-    expect(() => parsePieceFormData(formData)).toThrow(
-      "skillDesc is required when creating skill",
-    );
+    const parsed = parsePieceFormData(formData);
+
+    expect(parsed.skillDraft?.implementationKind).toBe("script_hook");
+    expect(parsed.skillDraft?.effects).toEqual([]);
+    expect(parsed.skillDraft?.scriptHook).toBe("reflect_until_blocked");
   });
 
-  it("throws when moveVectorsJson has invalid shape", () => {
+  it("throws when script_hook has empty scriptHook", () => {
     const formData = createBaseFormData();
-    formData.delete("movePatternId");
-    formData.set(
-      "moveVectorsJson",
-      JSON.stringify([{ dx: 1, dy: 0, maxStep: 0 }]),
-    );
+    formData.set("hasSkill", "true");
+    formData.set("skillMode", "draft");
+    formData.set("skillDesc", "専用フック");
+    formData.set("implementationKind", "script_hook");
+    formData.set("skillTriggerGroup", "special");
+    formData.set("skillTriggerType", "script_hook");
+    formData.set("skillConditionsJson", "[]");
+    formData.set("skillEffectsJson", "[]");
 
     expect(() => parsePieceFormData(formData)).toThrow(
-      "moveVectorsJson[0] maxStep must be a positive integer",
+      "scriptHook is required for script_hook skill",
     );
   });
 

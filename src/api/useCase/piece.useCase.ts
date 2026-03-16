@@ -1,9 +1,9 @@
 import {
   MovePatternOption,
   PieceRecord,
-  SkillDraftOptions,
-  SkillEffectRecord,
+  SkillDefinitionRecord,
   SkillOption,
+  SkillRegistryDocument,
 } from "@/api/model/piece";
 import {
   deletePiece,
@@ -18,9 +18,9 @@ import {
   uploadPieceImage,
 } from "@/api/dao/pieceImage.dao";
 import {
-  insertSkillWithEffect,
-  listSkillDraftOptions,
-  listSkillEffectsBySkillId,
+  getSkillDefinitionBySkillId,
+  insertSkillDefinitionV2,
+  listSkillRegistry,
   listSkills,
 } from "@/api/dao/skill.dao";
 import {
@@ -33,17 +33,56 @@ import {
 import { PieceFormInput } from "@/types/piece";
 import { generatePieceCode, normalizePieceCode } from "@/utils/piece-code";
 
-// レスポンス型
+type PieceUseCaseDeps = {
+  listPieces: typeof listPieces;
+  listMovePatterns: typeof listMovePatterns;
+  listSkills: typeof listSkills;
+  listSkillRegistry: typeof listSkillRegistry;
+  getPieceById: typeof getPieceById;
+  getSkillDefinitionBySkillId: typeof getSkillDefinitionBySkillId;
+  listMoveVectorsByMovePatternId: typeof listMoveVectorsByMovePatternId;
+  getMovePatternDetailById: typeof getMovePatternDetailById;
+  createSignedImageUrl: typeof createSignedImageUrl;
+  insertSkillDefinitionV2: typeof insertSkillDefinitionV2;
+  insertMovePatternWithVectors: typeof insertMovePatternWithVectors;
+  updateMovePatternSpecialConfig: typeof updateMovePatternSpecialConfig;
+  uploadPieceImage: typeof uploadPieceImage;
+  insertPiece: typeof insertPiece;
+  updatePiece: typeof updatePiece;
+  deletePieceImage: typeof deletePieceImage;
+  deletePiece: typeof deletePiece;
+};
+
+const defaultDeps: PieceUseCaseDeps = {
+  listPieces,
+  listMovePatterns,
+  listSkills,
+  listSkillRegistry,
+  getPieceById,
+  getSkillDefinitionBySkillId,
+  listMoveVectorsByMovePatternId,
+  getMovePatternDetailById,
+  createSignedImageUrl,
+  insertSkillDefinitionV2,
+  insertMovePatternWithVectors,
+  updateMovePatternSpecialConfig,
+  uploadPieceImage,
+  insertPiece,
+  updatePiece,
+  deletePieceImage,
+  deletePiece,
+};
+
 export type PieceListResponse = {
   pieces: PieceRecord[];
   movePatterns: MovePatternOption[];
   skills: SkillOption[];
-  skillDraftOptions: SkillDraftOptions;
+  skillRegistry: SkillRegistryDocument;
 };
 
 export type PieceDetailResponse = {
   piece: PieceRecord;
-  skillEffects: SkillEffectRecord[];
+  skillDefinition: SkillDefinitionRecord | null;
   moveVectors: { dx: number; dy: number; maxStep: number }[];
   movePattern: {
     id: number;
@@ -61,15 +100,15 @@ export type PieceDetailResponse = {
   imageUrl: string | null;
 };
 
-// 駒一覧取得（検索対応）
 export async function listPiecesUseCase(
   query?: string,
+  deps: PieceUseCaseDeps = defaultDeps,
 ): Promise<PieceListResponse> {
-  const [pieces, movePatterns, skills, skillDraftOptions] = await Promise.all([
-    listPieces(),
-    listMovePatterns(),
-    listSkills(),
-    listSkillDraftOptions(),
+  const [pieces, movePatterns, skills, skillRegistry] = await Promise.all([
+    deps.listPieces(),
+    deps.listMovePatterns(),
+    deps.listSkills(),
+    deps.listSkillRegistry(),
   ]);
 
   const filteredPieces = query
@@ -85,43 +124,50 @@ export async function listPiecesUseCase(
       })()
     : pieces;
 
-  return { pieces: filteredPieces, movePatterns, skills, skillDraftOptions };
+  return { pieces: filteredPieces, movePatterns, skills, skillRegistry };
 }
 
-// 駒詳細取得
 export async function getPieceDetailUseCase(
   pieceId: number,
+  deps: PieceUseCaseDeps = defaultDeps,
 ): Promise<PieceDetailResponse | null> {
-  const piece = await getPieceById(pieceId);
+  const piece = await deps.getPieceById(pieceId);
   if (!piece) return null;
 
-  const [skillEffects, moveVectors, movePattern, imageUrl] = await Promise.all([
+  const [skillDefinition, moveVectors, movePattern, imageUrl] = await Promise.all([
     piece.skillId
-      ? listSkillEffectsBySkillId(piece.skillId)
-      : Promise.resolve([]),
-    listMoveVectorsByMovePatternId(piece.movePatternId),
-    getMovePatternDetailById(piece.movePatternId),
+      ? deps.getSkillDefinitionBySkillId(piece.skillId)
+      : Promise.resolve(null),
+    deps.listMoveVectorsByMovePatternId(piece.movePatternId),
+    deps.getMovePatternDetailById(piece.movePatternId),
     piece.imageBucket && piece.imageKey
-      ? createSignedImageUrl(piece.imageBucket, piece.imageKey)
+      ? deps.createSignedImageUrl(piece.imageBucket, piece.imageKey)
       : Promise.resolve(null),
   ]);
 
-  return { piece, skillEffects, moveVectors, movePattern, imageUrl };
+  return { piece, skillDefinition, moveVectors, movePattern, imageUrl };
 }
 
-// 駒作成
+export async function getSkillDefinitionUseCase(
+  skillId: number,
+  deps: Pick<PieceUseCaseDeps, "getSkillDefinitionBySkillId"> = defaultDeps,
+): Promise<SkillDefinitionRecord | null> {
+  return deps.getSkillDefinitionBySkillId(skillId);
+}
+
 export async function createPieceUseCase(
   input: PieceFormInput,
+  deps: PieceUseCaseDeps = defaultDeps,
 ): Promise<PieceRecord> {
   const pieceCode = normalizePieceCode(input.pieceCode) ?? generatePieceCode();
 
   const skillId = input.skillDraft
-    ? await insertSkillWithEffect(input.skillDraft)
+    ? await deps.insertSkillDefinitionV2(input.skillDraft)
     : input.skillId;
 
   const movePatternId =
     input.moveVectors.length > 0
-      ? await insertMovePatternWithVectors(
+      ? await deps.insertMovePatternWithVectors(
           input.moveVectors,
           {
             kanji: input.kanji,
@@ -144,7 +190,7 @@ export async function createPieceUseCase(
       input.moveConstraintsJson !== null ||
       input.moveRulesJson !== null)
   ) {
-    await updateMovePatternSpecialConfig(input.movePatternId, {
+    await deps.updateMovePatternSpecialConfig(input.movePatternId, {
       canJump: input.moveCanJump,
       constraintsJson: input.moveConstraintsJson,
       rules: input.moveRulesJson,
@@ -152,10 +198,10 @@ export async function createPieceUseCase(
   }
 
   const image = input.imageFile
-    ? await uploadPieceImage({ pieceCode, imageFile: input.imageFile })
+    ? await deps.uploadPieceImage({ pieceCode, imageFile: input.imageFile })
     : null;
 
-  const created = await insertPiece({
+  const created = await deps.insertPiece({
     pieceCode,
     kanji: input.kanji,
     name: input.name,
@@ -176,23 +222,23 @@ export async function createPieceUseCase(
   return created;
 }
 
-// 駒更新
 export async function updatePieceUseCase(
   pieceId: number,
   input: PieceFormInput,
+  deps: PieceUseCaseDeps = defaultDeps,
 ): Promise<PieceRecord> {
-  const existing = await getPieceById(pieceId);
+  const existing = await deps.getPieceById(pieceId);
   if (!existing) throw new Error(`Piece ${pieceId} not found`);
 
   const pieceCode = normalizePieceCode(input.pieceCode) ?? existing.pieceCode;
 
   const skillId = input.skillDraft
-    ? await insertSkillWithEffect(input.skillDraft)
+    ? await deps.insertSkillDefinitionV2(input.skillDraft)
     : input.skillId;
 
   const movePatternId =
     input.moveVectors.length > 0
-      ? await insertMovePatternWithVectors(
+      ? await deps.insertMovePatternWithVectors(
           input.moveVectors,
           {
             kanji: input.kanji,
@@ -213,7 +259,7 @@ export async function updatePieceUseCase(
       input.moveConstraintsJson !== null ||
       input.moveRulesJson !== null)
   ) {
-    await updateMovePatternSpecialConfig(movePatternId, {
+    await deps.updateMovePatternSpecialConfig(movePatternId, {
       canJump: input.moveCanJump,
       constraintsJson: input.moveConstraintsJson,
       rules: input.moveRulesJson,
@@ -227,7 +273,7 @@ export async function updatePieceUseCase(
   } | null = null;
 
   if (input.imageFile) {
-    const uploaded = await uploadPieceImage({
+    const uploaded = await deps.uploadPieceImage({
       pieceCode,
       imageFile: input.imageFile,
     });
@@ -238,7 +284,7 @@ export async function updatePieceUseCase(
     };
   }
 
-  const updated = await updatePiece(pieceId, {
+  const updated = await deps.updatePiece(pieceId, {
     pieceCode,
     kanji: input.kanji,
     name: input.name,
@@ -259,37 +305,36 @@ export async function updatePieceUseCase(
 
   if (imageUpdate && existing.imageBucket && existing.imageKey) {
     try {
-      await deletePieceImage({
+      await deps.deletePieceImage({
         imageBucket: existing.imageBucket,
         imageKey: existing.imageKey,
       });
     } catch {
-      // 旧画像削除失敗は無視（更新自体は成功）
+      // Keep the piece update even if old image cleanup fails.
     }
   }
 
   return updated;
 }
 
-// 駒削除
 export async function deletePieceUseCase(
   pieceId: number,
+  deps: Pick<PieceUseCaseDeps, "getPieceById" | "deletePieceImage" | "deletePiece"> = defaultDeps,
 ): Promise<{ deleted: boolean }> {
-  const existing = await getPieceById(pieceId);
+  const existing = await deps.getPieceById(pieceId);
   if (!existing) throw new Error(`Piece ${pieceId} not found`);
-
-  await deletePiece(pieceId);
 
   if (existing.imageBucket && existing.imageKey) {
     try {
-      await deletePieceImage({
+      await deps.deletePieceImage({
         imageBucket: existing.imageBucket,
         imageKey: existing.imageKey,
       });
     } catch {
-      // 画像削除失敗は無視（DBからの削除は成功）
+      // Ignore image cleanup failures and continue deleting the DB row.
     }
   }
 
+  await deps.deletePiece(pieceId);
   return { deleted: true };
 }

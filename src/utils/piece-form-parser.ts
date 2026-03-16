@@ -1,4 +1,5 @@
 import { PieceFormInput } from "@/types/piece";
+import { buildSkillDraftInputFromFormValues } from "@/utils/skill-form-state";
 
 function readRequiredString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -43,16 +44,6 @@ function readOptionalIntegerString(formData: FormData, key: string) {
   return parsed;
 }
 
-function readOptionalNumberString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  if (typeof value !== "string" || value.trim() === "") return null;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`${key} must be a number`);
-  }
-  return parsed;
-}
-
 function readRarity(formData: FormData): "N" | "R" | "SR" | "UR" | "SSR" {
   const value = formData.get("rarity");
   const rarity = typeof value === "string" ? value.trim().toUpperCase() : "N";
@@ -69,75 +60,105 @@ function readRarity(formData: FormData): "N" | "R" | "SR" | "UR" | "SSR" {
 }
 
 function parseSkillDraft(formData: FormData, hasSkill: boolean) {
-  if (!hasSkill) return null;
+  if (!hasSkill) return { skillId: null, skillDraft: null };
 
-  const skillDescRaw = formData.get("skillDesc");
-  const effectTypeRaw = formData.get("skillEffectType");
-  const targetRuleRaw = formData.get("skillTargetRule");
-  const triggerTimingRaw = formData.get("skillTriggerTiming");
+  const skillModeRaw = formData.get("skillMode");
+  const skillMode =
+    typeof skillModeRaw === "string" ? skillModeRaw.trim() : "existing";
 
-  const skillDesc = typeof skillDescRaw === "string" ? skillDescRaw.trim() : "";
-  const effectType =
-    typeof effectTypeRaw === "string" ? effectTypeRaw.trim() : "";
-  const targetRule =
-    typeof targetRuleRaw === "string" ? targetRuleRaw.trim() : "";
-  const triggerTiming =
-    typeof triggerTimingRaw === "string" ? triggerTimingRaw.trim() : "";
-
-  if (!skillDesc) throw new Error("skillDesc is required when creating skill");
-  if (!effectType)
-    throw new Error("skillEffectType is required when creating skill");
-  if (!targetRule)
-    throw new Error("skillTargetRule is required when creating skill");
-  if (!triggerTiming)
-    throw new Error("skillTriggerTiming is required when creating skill");
-
-  const valueTextRaw = formData.get("skillValueText");
-  const valueText =
-    typeof valueTextRaw === "string" && valueTextRaw.trim().length > 0
-      ? valueTextRaw.trim()
-      : null;
-  if (!valueText)
-    throw new Error("skillValueText is required when creating skill");
-
-  const valueNum = readOptionalNumberString(formData, "skillValueNum");
-  if (valueNum === null)
-    throw new Error("skillValueNum is required when creating skill");
-  const procChance = readOptionalNumberString(formData, "skillProcChance");
-  if (procChance === null)
-    throw new Error("skillProcChance is required when creating skill");
-  const durationTurns = readOptionalNumberString(
-    formData,
-    "skillDurationTurns",
-  );
-  if (durationTurns === null)
-    throw new Error("skillDurationTurns is required when creating skill");
-  const radius = readOptionalNumberString(formData, "skillRadius");
-  if (radius === null)
-    throw new Error("skillRadius is required when creating skill");
-
-  const paramsJsonRaw = formData.get("skillParamsJson");
-  let paramsJson: Record<string, unknown> | null = null;
-  if (typeof paramsJsonRaw === "string" && paramsJsonRaw.trim().length > 0) {
-    try {
-      paramsJson = JSON.parse(paramsJsonRaw) as Record<string, unknown>;
-    } catch {
-      throw new Error("skillParamsJson must be valid JSON");
-    }
+  if (skillMode === "existing") {
+    const skillId = readIntegerString(formData, "skillId");
+    return { skillId, skillDraft: null };
   }
 
-  return {
-    skillDesc,
-    effectType,
-    targetRule,
-    triggerTiming,
-    valueText,
-    valueNum,
-    procChance,
-    durationTurns,
-    radius,
-    paramsJson,
-  };
+  if (skillMode !== "draft") {
+    throw new Error("skillMode is invalid");
+  }
+
+  const skillDraft = buildSkillDraftInputFromFormValues({
+    skillDesc: readRequiredString(formData, "skillDesc"),
+    implementationKind: readRequiredString(formData, "implementationKind"),
+    triggerGroup: readRequiredString(formData, "skillTriggerGroup"),
+    triggerType: readRequiredString(formData, "skillTriggerType"),
+    scriptHook:
+      typeof formData.get("scriptHook") === "string"
+        ? String(formData.get("scriptHook"))
+        : "",
+    tagsCsv:
+      typeof formData.get("skillTagsCsv") === "string"
+        ? String(formData.get("skillTagsCsv"))
+        : "",
+    conditions: parseSkillConditions(formData),
+    effects: parseSkillEffects(formData),
+  });
+
+  return { skillId: null, skillDraft };
+}
+
+function parseSkillConditions(formData: FormData) {
+  const raw = formData.get("skillConditionsJson");
+  if (typeof raw !== "string" || raw.trim() === "") return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("skillConditionsJson must be valid JSON");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("skillConditionsJson must be an array");
+  }
+
+  return parsed.map((item, index) => {
+    if (!item || typeof item !== "object") {
+      throw new Error(`skillConditionsJson[${index}] must be an object`);
+    }
+    const row = item as Record<string, unknown>;
+    return {
+      clientKey:
+        typeof row.clientKey === "string" ? row.clientKey : `condition_${index}`,
+      group: typeof row.group === "string" ? row.group : "",
+      type: typeof row.type === "string" ? row.type : "",
+      paramsJson:
+        typeof row.paramsJson === "string" ? row.paramsJson : JSON.stringify({}),
+    };
+  });
+}
+
+function parseSkillEffects(formData: FormData) {
+  const raw = formData.get("skillEffectsJson");
+  if (typeof raw !== "string" || raw.trim() === "") return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("skillEffectsJson must be valid JSON");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("skillEffectsJson must be an array");
+  }
+
+  return parsed.map((item, index) => {
+    if (!item || typeof item !== "object") {
+      throw new Error(`skillEffectsJson[${index}] must be an object`);
+    }
+    const row = item as Record<string, unknown>;
+    return {
+      clientKey:
+        typeof row.clientKey === "string" ? row.clientKey : `effect_${index}`,
+      group: typeof row.group === "string" ? row.group : "",
+      type: typeof row.type === "string" ? row.type : "",
+      targetGroup:
+        typeof row.targetGroup === "string" ? row.targetGroup : "",
+      targetSelector:
+        typeof row.targetSelector === "string" ? row.targetSelector : "",
+      paramsJson:
+        typeof row.paramsJson === "string" ? row.paramsJson : JSON.stringify({}),
+    };
+  });
 }
 
 function parseMoveVectors(formData: FormData) {
@@ -272,17 +293,11 @@ export function parsePieceFormData(formData: FormData): PieceFormInput {
       : moveCanJumpRaw === "true" || moveCanJumpRaw === "on";
   const { moveConstraintsJson, moveRulesJson } = parseSpecialMove(formData);
 
-  const skillIdRaw = formData.get("skillId");
-  const skillId =
-    typeof skillIdRaw === "string" && skillIdRaw.trim().length > 0
-      ? readIntegerString(formData, "skillId")
-      : null;
   const hasSkillRaw = formData.get("hasSkill");
   const hasSkill = hasSkillRaw === "true" || hasSkillRaw === "on";
-  const skillDraft = parseSkillDraft(formData, hasSkill);
+  const { skillId, skillDraft } = parseSkillDraft(formData, hasSkill);
 
   const imageSource = "supabase" as const;
-
   const imageVersion = readIntegerString(formData, "imageVersion", 1);
 
   const isActiveRaw = formData.get("isActive");
