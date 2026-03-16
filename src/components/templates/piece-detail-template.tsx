@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -263,9 +264,12 @@ export function PieceDetailTemplate({ pieceId }: Props) {
             <div className="mt-4">
               <h3 className="mb-2 text-sm font-semibold text-slate-900">駒画像</h3>
               {data.imageUrl ? (
-                <img
+                <Image
                   src={data.imageUrl}
                   alt={`${data.piece.name}の画像`}
+                  width={112}
+                  height={112}
+                  unoptimized
                   className="h-28 w-28 rounded-md border border-slate-200 object-cover"
                 />
               ) : (
