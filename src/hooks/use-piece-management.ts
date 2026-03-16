@@ -5,12 +5,22 @@ import {
   MovePatternOption,
   MovePatternVector,
   PieceRecord,
-  SkillEffectRecord,
-  SkillDraftOptions,
+  SkillDefinitionRecord,
   SkillOption,
+  SkillRegistryDocument,
 } from "@/api/model/piece";
+import {
+  buildSkillDraftFormValuesFromDefinition,
+  createEmptySkillDraftConditionFormState,
+  createEmptySkillDraftEffectFormState,
+  createEmptySkillDraftFormValues,
+  SkillDraftConditionFormState,
+  SkillDraftEffectFormState,
+} from "@/utils/skill-form-state";
 
-type PieceFormState = {
+export type SkillMode = "existing" | "draft";
+
+export type PieceFormState = {
   pieceId: number | null;
   kanji: string;
   name: string;
@@ -26,18 +36,16 @@ type PieceFormState = {
     | "copy_front_enemy_move"
     | "copy_last_enemy_move";
   hasSkill: boolean;
+  skillMode: SkillMode;
   skillId: string;
   skillDesc: string;
-  skillEffectType: string;
-  skillTargetRule: string;
-  skillTargetAdjacentN: string;
-  skillTriggerTiming: string;
-  skillValueText: string;
-  skillValueNum: string;
-  skillProcChance: string;
-  skillDurationTurns: string;
-  skillRadius: string;
-  skillParamsJson: string;
+  implementationKind: string;
+  skillTriggerGroup: string;
+  skillTriggerType: string;
+  scriptHook: string;
+  skillTagsCsv: string;
+  skillConditions: SkillDraftConditionFormState[];
+  skillEffects: SkillDraftEffectFormState[];
   imageVersion: string;
   isActive: boolean;
   publishedAt: string;
@@ -47,7 +55,7 @@ type PieceFormState = {
 
 type PieceDetailResponse = {
   piece: PieceRecord;
-  skillEffects: SkillEffectRecord[];
+  skillDefinition: SkillDefinitionRecord | null;
   moveVectors: MovePatternVector[];
   movePattern: {
     id: number;
@@ -69,8 +77,23 @@ type PieceListResponse = {
   pieces: PieceRecord[];
   movePatterns: MovePatternOption[];
   skills: SkillOption[];
-  skillDraftOptions: SkillDraftOptions;
+  skillRegistry: SkillRegistryDocument;
 };
+
+function emptySkillRegistry(): SkillRegistryDocument {
+  return {
+    version: "skill-registry-v2-db",
+    updatedAt: new Date(0).toISOString(),
+    implementationKinds: [],
+    registries: {
+      trigger: { groups: [] },
+      target: { groups: [] },
+      effect: { groups: [] },
+      condition: { groups: [] },
+      param: { groups: [] },
+    },
+  };
+}
 
 function toDateTimeLocal(value: string | null) {
   if (!value) return "";
@@ -85,6 +108,7 @@ function toDateTimeLocal(value: string | null) {
 }
 
 function toFormState(piece?: PieceRecord): PieceFormState {
+  const draft = createEmptySkillDraftFormValues();
   return {
     pieceId: piece?.pieceId ?? null,
     kanji: piece?.kanji ?? "",
@@ -96,18 +120,16 @@ function toFormState(piece?: PieceRecord): PieceFormState {
     moveCanJump: false,
     specialMoveType: "none",
     hasSkill: Boolean(piece?.skillId),
+    skillMode: "existing",
     skillId: piece?.skillId ? String(piece.skillId) : "",
-    skillDesc: "",
-    skillEffectType: "",
-    skillTargetRule: "",
-    skillTargetAdjacentN: "",
-    skillTriggerTiming: "",
-    skillValueText: "",
-    skillValueNum: "",
-    skillProcChance: "",
-    skillDurationTurns: "",
-    skillRadius: "",
-    skillParamsJson: "",
+    skillDesc: draft.skillDesc,
+    implementationKind: draft.implementationKind,
+    skillTriggerGroup: draft.triggerGroup,
+    skillTriggerType: draft.triggerType,
+    scriptHook: draft.scriptHook,
+    skillTagsCsv: draft.tagsCsv,
+    skillConditions: draft.conditions,
+    skillEffects: draft.effects,
     imageVersion: String(piece?.imageVersion ?? 1),
     isActive: piece?.isActive ?? true,
     publishedAt: toDateTimeLocal(piece?.publishedAt ?? null),
@@ -117,10 +139,7 @@ function toFormState(piece?: PieceRecord): PieceFormState {
 }
 
 function toEditFormState(detail: PieceDetailResponse): PieceFormState {
-  const firstEffect = detail.skillEffects[0] ?? null;
-  const targetRule = firstEffect?.targetRule ?? "";
-  const adjacentMatch = targetRule.match(/^adjacent_(\d+)$/);
-  const isAdjacentCustom = Boolean(adjacentMatch);
+  const draft = buildSkillDraftFormValuesFromDefinition(detail.skillDefinition);
 
   return {
     pieceId: detail.piece.pieceId,
@@ -143,31 +162,16 @@ function toEditFormState(detail: PieceDetailResponse): PieceFormState {
       return "none";
     })(),
     hasSkill: Boolean(detail.piece.skillId),
+    skillMode: "existing",
     skillId: detail.piece.skillId ? String(detail.piece.skillId) : "",
-    skillDesc: detail.piece.skillDesc ?? "",
-    skillEffectType: firstEffect?.effectType ?? "",
-    skillTargetRule: isAdjacentCustom ? "__adjacent_custom__" : targetRule,
-    skillTargetAdjacentN: adjacentMatch?.[1] ?? "",
-    skillTriggerTiming: firstEffect?.triggerTiming ?? "",
-    skillValueText: firstEffect?.valueText ?? "",
-    skillValueNum:
-      firstEffect?.valueNum !== null && firstEffect?.valueNum !== undefined
-        ? String(firstEffect.valueNum)
-        : "",
-    skillProcChance:
-      firstEffect?.procChance !== null && firstEffect?.procChance !== undefined
-        ? String(firstEffect.procChance)
-        : "",
-    skillDurationTurns:
-      firstEffect?.durationTurns !== null &&
-      firstEffect?.durationTurns !== undefined
-        ? String(firstEffect.durationTurns)
-        : "",
-    skillRadius:
-      firstEffect?.radius !== null && firstEffect?.radius !== undefined
-        ? String(firstEffect.radius)
-        : "",
-    skillParamsJson: "",
+    skillDesc: draft.skillDesc,
+    implementationKind: draft.implementationKind,
+    skillTriggerGroup: draft.triggerGroup,
+    skillTriggerType: draft.triggerType,
+    scriptHook: draft.scriptHook,
+    skillTagsCsv: draft.tagsCsv,
+    skillConditions: draft.conditions,
+    skillEffects: draft.effects,
     imageVersion: String(detail.piece.imageVersion ?? 1),
     isActive: detail.piece.isActive ?? true,
     publishedAt: toDateTimeLocal(detail.piece.publishedAt ?? null),
@@ -187,25 +191,16 @@ function buildFormData(state: PieceFormState) {
   formData.set("moveCanJump", String(state.moveCanJump));
   formData.set("specialMoveType", state.specialMoveType);
   formData.set("hasSkill", String(state.hasSkill));
+  formData.set("skillMode", state.skillMode);
   formData.set("skillId", state.skillId);
   formData.set("skillDesc", state.skillDesc.trim());
-  formData.set("skillEffectType", state.skillEffectType.trim());
-  let normalizedTargetRule = state.skillTargetRule.trim();
-  if (state.skillTargetRule === "__adjacent_custom__") {
-    const adjacentN = Number(state.skillTargetAdjacentN.trim());
-    if (!Number.isInteger(adjacentN) || adjacentN <= 0) {
-      throw new Error("周囲nマスの数値は1以上の整数で入力してください");
-    }
-    normalizedTargetRule = `adjacent_${adjacentN}`;
-  }
-  formData.set("skillTargetRule", normalizedTargetRule);
-  formData.set("skillTriggerTiming", state.skillTriggerTiming.trim());
-  formData.set("skillValueText", state.skillValueText.trim());
-  formData.set("skillValueNum", state.skillValueNum.trim());
-  formData.set("skillProcChance", state.skillProcChance.trim());
-  formData.set("skillDurationTurns", state.skillDurationTurns.trim());
-  formData.set("skillRadius", state.skillRadius.trim());
-  formData.set("skillParamsJson", state.skillParamsJson.trim());
+  formData.set("implementationKind", state.implementationKind.trim());
+  formData.set("skillTriggerGroup", state.skillTriggerGroup.trim());
+  formData.set("skillTriggerType", state.skillTriggerType.trim());
+  formData.set("scriptHook", state.scriptHook.trim());
+  formData.set("skillTagsCsv", state.skillTagsCsv.trim());
+  formData.set("skillConditionsJson", JSON.stringify(state.skillConditions));
+  formData.set("skillEffectsJson", JSON.stringify(state.skillEffects));
   formData.set("imageSource", "supabase");
   formData.set("imageVersion", state.imageVersion || "1");
   formData.set("isActive", String(state.isActive));
@@ -235,13 +230,10 @@ export function usePieceManagement() {
   const [pieces, setPieces] = useState<PieceRecord[]>([]);
   const [movePatterns, setMovePatterns] = useState<MovePatternOption[]>([]);
   const [skills, setSkills] = useState<SkillOption[]>([]);
-  const [skillDraftOptions, setSkillDraftOptions] = useState<SkillDraftOptions>(
-    {
-      effectTypes: [],
-      targetRules: [],
-      triggerTimings: [],
-    },
-  );
+  const [skillRegistry, setSkillRegistry] =
+    useState<SkillRegistryDocument>(emptySkillRegistry);
+  const [selectedSkillDetail, setSelectedSkillDetail] =
+    useState<SkillDefinitionRecord | null>(null);
   const [form, setForm] = useState<PieceFormState>(toFormState());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -261,6 +253,11 @@ export function usePieceManagement() {
     return toJson<PieceListResponse>(res);
   }, []);
 
+  const fetchSkillDetail = useCallback(async (skillId: number) => {
+    const res = await fetch(`/api/skills/${skillId}`, { cache: "no-store" });
+    return toJson<SkillDefinitionRecord>(res);
+  }, []);
+
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -270,7 +267,7 @@ export function usePieceManagement() {
       setPieces(data.pieces);
       setMovePatterns(data.movePatterns);
       setSkills(data.skills);
-      setSkillDraftOptions(data.skillDraftOptions);
+      setSkillRegistry(data.skillRegistry);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -282,17 +279,184 @@ export function usePieceManagement() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (!form.hasSkill || form.skillMode !== "existing" || !form.skillId) {
+      if (!form.hasSkill) {
+        setSelectedSkillDetail(null);
+      }
+      return;
+    }
+
+    const skillId = Number(form.skillId);
+    if (!Number.isInteger(skillId) || skillId <= 0) return;
+    if (selectedSkillDetail?.skillId === skillId) return;
+
+    void (async () => {
+      try {
+        const detail = await fetchSkillDetail(skillId);
+        setSelectedSkillDetail(detail);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, [
+    fetchSkillDetail,
+    form.hasSkill,
+    form.skillId,
+    form.skillMode,
+    selectedSkillDetail?.skillId,
+  ]);
+
   const isEditMode = useMemo(() => form.pieceId !== null, [form.pieceId]);
 
   const onChange = useCallback(
     (key: keyof PieceFormState, value: string | boolean | File | null) => {
+      setForm((prev) => {
+        if (key === "hasSkill") {
+          const nextHasSkill = Boolean(value);
+          if (!nextHasSkill) {
+            return {
+              ...prev,
+              hasSkill: false,
+              skillMode: "existing",
+              skillId: "",
+            };
+          }
+          return {
+            ...prev,
+            hasSkill: true,
+          };
+        }
+
+        if (key === "skillMode") {
+          return {
+            ...prev,
+            skillMode: value as SkillMode,
+          };
+        }
+
+        if (key === "skillId") {
+          return {
+            ...prev,
+            skillId: String(value ?? ""),
+          };
+        }
+
+        return { ...prev, [key]: value };
+      });
+    },
+    [],
+  );
+
+  const updateSkillDraftField = useCallback(
+    (
+      key:
+        | "skillDesc"
+        | "implementationKind"
+        | "skillTriggerGroup"
+        | "skillTriggerType"
+        | "scriptHook"
+        | "skillTagsCsv",
+      value: string,
+    ) => {
       setForm((prev) => ({ ...prev, [key]: value }));
     },
     [],
   );
 
+  const addSkillCondition = useCallback(() => {
+    setForm((prev) => ({
+      ...prev,
+      skillConditions: [
+        ...prev.skillConditions,
+        createEmptySkillDraftConditionFormState(),
+      ],
+    }));
+  }, []);
+
+  const updateSkillCondition = useCallback(
+    (
+      clientKey: string,
+      key: keyof SkillDraftConditionFormState,
+      value: string,
+    ) => {
+      setForm((prev) => ({
+        ...prev,
+        skillConditions: prev.skillConditions.map((condition) =>
+          condition.clientKey === clientKey
+            ? { ...condition, [key]: value }
+            : condition,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeSkillCondition = useCallback((clientKey: string) => {
+    setForm((prev) => ({
+      ...prev,
+      skillConditions:
+        prev.skillConditions.length > 1
+          ? prev.skillConditions.filter(
+              (condition) => condition.clientKey !== clientKey,
+            )
+          : [createEmptySkillDraftConditionFormState()],
+    }));
+  }, []);
+
+  const addSkillEffect = useCallback(() => {
+    setForm((prev) => ({
+      ...prev,
+      skillEffects: [...prev.skillEffects, createEmptySkillDraftEffectFormState()],
+    }));
+  }, []);
+
+  const updateSkillEffect = useCallback(
+    (
+      clientKey: string,
+      key: keyof SkillDraftEffectFormState,
+      value: string,
+    ) => {
+      setForm((prev) => ({
+        ...prev,
+        skillEffects: prev.skillEffects.map((effect) =>
+          effect.clientKey === clientKey ? { ...effect, [key]: value } : effect,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeSkillEffect = useCallback((clientKey: string) => {
+    setForm((prev) => ({
+      ...prev,
+      skillEffects:
+        prev.skillEffects.length > 1
+          ? prev.skillEffects.filter((effect) => effect.clientKey !== clientKey)
+          : [createEmptySkillDraftEffectFormState()],
+    }));
+  }, []);
+
+  const loadSelectedSkillAsDraft = useCallback(() => {
+    if (!selectedSkillDetail || selectedSkillDetail.version !== "v2") return;
+    const draft = buildSkillDraftFormValuesFromDefinition(selectedSkillDetail);
+    setForm((prev) => ({
+      ...prev,
+      skillMode: "draft",
+      skillDesc: draft.skillDesc,
+      implementationKind: draft.implementationKind,
+      skillTriggerGroup: draft.triggerGroup,
+      skillTriggerType: draft.triggerType,
+      scriptHook: draft.scriptHook,
+      skillTagsCsv: draft.tagsCsv,
+      skillConditions: draft.conditions,
+      skillEffects: draft.effects,
+    }));
+  }, [selectedSkillDetail]);
+
   const resetForm = useCallback(() => {
     setForm(toFormState());
+    setSelectedSkillDetail(null);
   }, []);
 
   const search = useCallback(async () => {
@@ -305,7 +469,7 @@ export function usePieceManagement() {
       setPieces(data.pieces);
       setMovePatterns(data.movePatterns);
       setSkills(data.skills);
-      setSkillDraftOptions(data.skillDraftOptions);
+      setSkillRegistry(data.skillRegistry);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -323,7 +487,7 @@ export function usePieceManagement() {
       setPieces(data.pieces);
       setMovePatterns(data.movePatterns);
       setSkills(data.skills);
-      setSkillDraftOptions(data.skillDraftOptions);
+      setSkillRegistry(data.skillRegistry);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -333,6 +497,7 @@ export function usePieceManagement() {
 
   const startEdit = useCallback((piece: PieceRecord) => {
     setForm(toFormState(piece));
+    setSelectedSkillDetail(null);
     setSuccessMessage(null);
     setError(null);
   }, []);
@@ -345,6 +510,7 @@ export function usePieceManagement() {
       const res = await fetch(`/api/pieces/${pieceId}`, { cache: "no-store" });
       const detail = await toJson<PieceDetailResponse>(res);
       setForm(toEditFormState(detail));
+      setSelectedSkillDetail(detail.skillDefinition);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -412,7 +578,8 @@ export function usePieceManagement() {
     pieces,
     movePatterns,
     skills,
-    skillDraftOptions,
+    skillRegistry,
+    selectedSkillDetail,
     form,
     isEditMode,
     isLoading,
@@ -422,6 +589,14 @@ export function usePieceManagement() {
     queryInput,
     query,
     onChange,
+    updateSkillDraftField,
+    addSkillCondition,
+    updateSkillCondition,
+    removeSkillCondition,
+    addSkillEffect,
+    updateSkillEffect,
+    removeSkillEffect,
+    loadSelectedSkillAsDraft,
     setQueryInput,
     search,
     resetSearch,

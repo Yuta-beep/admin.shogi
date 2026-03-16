@@ -5,8 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   MovePatternVector,
   PieceRecord,
-  SkillEffectRecord,
+  SkillDefinitionRecord,
 } from "@/api/model/piece";
+import {
+  getRemainingSkillStatus,
+  remainingSkillStatusClassName,
+} from "@/utils/remaining-skill-status";
 
 type Props = {
   pieceId: number;
@@ -14,7 +18,7 @@ type Props = {
 
 type PieceDetailData = {
   piece: PieceRecord;
-  skillEffects: SkillEffectRecord[];
+  skillDefinition: SkillDefinitionRecord | null;
   moveVectors: MovePatternVector[];
   movePattern: {
     id: number;
@@ -54,129 +58,6 @@ function buildMoveCells(vectors: MovePatternVector[]) {
   return cells;
 }
 
-function effectTypeLabel(value: string) {
-  switch (value) {
-    case "apply_status":
-      return "状態付与";
-    case "board_hazard":
-      return "盤面ギミック";
-    case "buff":
-      return "強化";
-    case "capture_constraint":
-      return "捕獲制約";
-    case "capture_with_leap":
-      return "飛び越え捕獲";
-    case "copy_ability":
-      return "能力コピー";
-    case "defense_or_immunity":
-      return "防御・無効化";
-    case "destroy_hand_piece":
-      return "手駒破壊";
-    case "disable_piece":
-      return "駒無効化";
-    case "extra_action":
-      return "追加行動";
-    case "forced_move":
-      return "強制移動";
-    case "gain_piece":
-      return "駒獲得";
-    case "inherit_ability":
-      return "能力継承";
-    case "linked_action":
-      return "連動行動";
-    case "modify_movement":
-      return "移動変更";
-    case "multi_capture":
-      return "複数捕獲";
-    case "reflective_movement":
-      return "反射移動";
-    case "remove_piece":
-      return "駒除去";
-    case "return_to_hand":
-      return "手駒に戻す";
-    case "revive":
-      return "復活";
-    case "seal_skill":
-      return "スキル封印";
-    case "send_to_hand":
-      return "手駒送り";
-    case "substitute":
-      return "身代わり";
-    case "summon_piece":
-      return "駒召喚";
-    case "transform_piece":
-      return "駒変化";
-    default:
-      return "その他";
-  }
-}
-
-function targetRuleLabel(value: string) {
-  const adjacentMatch = value.match(/^adjacent_(\d+)$/);
-  if (adjacentMatch) return `周囲${adjacentMatch[1]}マス`;
-  switch (value) {
-    case "self":
-      return "自身";
-    case "adjacent_area":
-      return "隣接範囲";
-    case "adjacent_8":
-      return "周囲8マス";
-    case "enemy_piece":
-      return "敵駒";
-    case "ally_piece":
-      return "味方駒";
-    case "board_cell":
-      return "盤面マス";
-    case "enemy_hand":
-      return "敵の手駒";
-    case "hand_piece":
-      return "手駒";
-    case "front_enemy":
-      return "前方の敵";
-    case "left_right":
-      return "左右";
-    case "same_row_or_col":
-      return "同じ行または列";
-    case "empty_cell":
-      return "空きマス";
-    case "all_enemy":
-      return "敵全体";
-    case "all_ally":
-      return "味方全体";
-    case "unspecified":
-      return "未指定";
-    default:
-      return "その他";
-  }
-}
-
-function triggerTimingLabel(value: string) {
-  switch (value) {
-    case "after_move":
-      return "移動後";
-    case "on_capture":
-      return "捕獲時";
-    case "on_capture_attempt":
-      return "捕獲試行時";
-    case "on_captured":
-      return "捕獲された時";
-    case "on_condition_met":
-      return "条件達成時";
-    case "on_move":
-      return "移動時";
-    case "on_other_piece_move":
-      return "他駒移動時";
-    case "on_turn_start":
-      return "ターン開始時";
-    case "on_turn_end":
-      return "ターン終了時";
-    case "passive":
-      return "常時";
-    default:
-      return "その他";
-  }
-}
-
 async function fetchPieceDetail(id: number): Promise<PieceDetailData> {
   const res = await fetch(`/api/pieces/${id}`, { cache: "no-store" });
   const json = (await res.json()) as {
@@ -188,6 +69,106 @@ async function fetchPieceDetail(id: number): Promise<PieceDetailData> {
     throw new Error(json.error ?? "取得に失敗しました");
   }
   return json.data as PieceDetailData;
+}
+
+function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecord | null }) {
+  if (!definition) {
+    return <p className="text-sm text-slate-500">スキル定義はありません。</p>;
+  }
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+        <div>version: {definition.version}</div>
+        <div>
+          implementation_kind: {definition.implementationKind ?? "legacy/null"}
+        </div>
+        <div>
+          trigger: {definition.trigger.group ?? "-"} / {definition.trigger.type ?? "-"}
+        </div>
+        <div>script_hook: {definition.scriptHook ?? "-"}</div>
+        <div>tags: {definition.tags.length > 0 ? definition.tags.join(", ") : "-"}</div>
+      </div>
+
+      {definition.version === "v2" ? (
+        <>
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Conditions</h3>
+            {definition.conditions.length === 0 ? (
+              <p className="text-xs text-slate-500">条件なし</p>
+            ) : (
+              <div className="space-y-2">
+                {definition.conditions.map((condition) => (
+                  <div
+                    key={`condition-${condition.skillConditionId ?? condition.order}`}
+                    className="rounded border border-slate-200 p-2"
+                  >
+                    <div>
+                      #{condition.order} {condition.group} / {condition.type}
+                    </div>
+                    <pre className="mt-1 overflow-x-auto rounded bg-slate-100 p-2 text-xs">
+                      {JSON.stringify(condition.paramsJson ?? {}, null, 2)}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Effects</h3>
+            {definition.effects.length === 0 ? (
+              <p className="text-xs text-slate-500">effect なし</p>
+            ) : (
+              <div className="space-y-2">
+                {definition.effects.map((effect) => (
+                  <div
+                    key={`effect-${effect.skillEffectId ?? effect.effectOrder}`}
+                    className="rounded border border-slate-200 p-2"
+                  >
+                    <div>
+                      #{effect.effectOrder} {effect.effectGroup} / {effect.effectType}
+                    </div>
+                    <div>
+                      target: {effect.targetGroup} / {effect.targetSelector}
+                    </div>
+                    <pre className="mt-1 overflow-x-auto rounded bg-slate-100 p-2 text-xs">
+                      {JSON.stringify(effect.paramsJson ?? {}, null, 2)}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold text-slate-900">Legacy Effects</h3>
+          {definition.legacyEffects.length === 0 ? (
+            <p className="text-xs text-slate-500">legacy effect なし</p>
+          ) : (
+            <div className="space-y-2">
+              {definition.legacyEffects.map((effect) => (
+                <div
+                  key={`legacy-${effect.skillEffectId}`}
+                  className="rounded border border-slate-200 p-2"
+                >
+                  <div>
+                    #{effect.effectOrder} {effect.effectType}
+                  </div>
+                  <div>target_rule: {effect.targetRule}</div>
+                  <div>trigger_timing: {effect.triggerTiming ?? "-"}</div>
+                  <pre className="mt-1 overflow-x-auto rounded bg-slate-100 p-2 text-xs">
+                    {JSON.stringify(effect.paramsJson ?? {}, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function PieceDetailTemplate({ pieceId }: Props) {
@@ -249,10 +230,24 @@ export function PieceDetailTemplate({ pieceId }: Props) {
 
       {data ? (
         <>
+          {(() => {
+            const remainingStatus = getRemainingSkillStatus(data.piece.skillId);
+            return remainingStatus ? (
+              <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <h2 className="mb-3 text-lg font-semibold text-slate-900">
+                  残り 10 件の判定状態
+                </h2>
+                <span
+                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${remainingSkillStatusClassName(remainingStatus.state)}`}
+                >
+                  {remainingStatus.label}
+                </span>
+              </section>
+            ) : null;
+          })()}
+
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">
-              基本情報
-            </h2>
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">基本情報</h2>
             <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
               <div>駒ID: {data.piece.pieceId}</div>
               <div>駒コード: {data.piece.pieceCode}</div>
@@ -266,9 +261,7 @@ export function PieceDetailTemplate({ pieceId }: Props) {
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">
-                駒画像
-              </h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">駒画像</h3>
               {data.imageUrl ? (
                 <img
                   src={data.imageUrl}
@@ -281,9 +274,7 @@ export function PieceDetailTemplate({ pieceId }: Props) {
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">
-                移動可能範囲
-              </h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">移動可能範囲</h3>
               <div className="inline-grid grid-cols-9 gap-1 rounded-md bg-slate-200 p-2">
                 {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => {
                   const row = Math.floor(i / BOARD_SIZE);
@@ -309,42 +300,8 @@ export function PieceDetailTemplate({ pieceId }: Props) {
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">
-              スキル効果詳細
-            </h2>
-            {data.skillEffects.length === 0 ? (
-              <p className="text-sm text-slate-500">スキル効果はありません。</p>
-            ) : (
-              <div className="space-y-3">
-                {data.skillEffects.map((effect) => (
-                  <div
-                    key={effect.skillEffectId}
-                    className="rounded-md border border-slate-200 p-3 text-sm"
-                  >
-                    <div>スキル説明: {data.piece.skillDesc ?? "なし"}</div>
-                    <div>効果タイプ: {effectTypeLabel(effect.effectType)}</div>
-                    <div>対象ルール: {targetRuleLabel(effect.targetRule)}</div>
-                    <div>
-                      発動タイミング: {triggerTimingLabel(effect.triggerTiming)}
-                    </div>
-                    <div>効果テキスト: {effect.valueText ?? "なし"}</div>
-                    <div>効果数値: {effect.valueNum ?? "なし"}</div>
-                    <div>発動確率: {effect.procChance ?? "なし"}</div>
-                    <div>継続ターン: {effect.durationTurns ?? "なし"}</div>
-                    <div>半径: {effect.radius ?? "なし"}</div>
-                    <div>
-                      追加パラメータ(JSON):{" "}
-                      {effect.paramsJson
-                        ? JSON.stringify(effect.paramsJson)
-                        : "なし"}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      効果順序: {effect.effectOrder}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">スキル定義詳細</h2>
+            <SkillDefinitionPanel definition={data.skillDefinition} />
           </section>
         </>
       ) : null}
