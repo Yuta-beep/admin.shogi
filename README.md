@@ -1,6 +1,7 @@
 # admin.shogi
 
 将棋アプリの管理画面です。駒マスタ・ステージマスタの CRUD と画像アップロード機能を実装しています。
+現在の駒管理は skill v2 (catalog / registry ベース) を前提にしています。
 
 ## Tech Stack
 
@@ -14,9 +15,9 @@
 ## 画面
 
 - `/pieces` — 駒一覧（検索・作成・詳細・更新・削除）
-- `/pieces/new` — 駒作成
+- `/pieces/new` — 駒作成（skill v2 draft 作成対応）
 - `/pieces/:pieceId` — 駒詳細（移動範囲・スキル効果）
-- `/pieces/:pieceId/edit` — 駒更新
+- `/pieces/:pieceId/edit` — 駒更新（既存 skill 選択 / v2 draft 編集）
 - `/stages` — ステージ一覧（検索・作成・詳細）
 - `/stages/new` — ステージ作成（盤面初期配置）
 - `/stages/:stageId` — ステージ詳細
@@ -68,11 +69,12 @@ bun run check
 
 | メソッド | パス                   | 説明                                    |
 | -------- | ---------------------- | --------------------------------------- |
-| `GET`    | `/api/pieces`          | 駒一覧・移動パターン・スキル一覧        |
+| `GET`    | `/api/pieces`          | 駒一覧・移動パターン・スキル一覧(v2)    |
 | `POST`   | `/api/pieces`          | 駒作成（multipart/form-data）           |
-| `GET`    | `/api/pieces/:pieceId` | 駒詳細（スキル効果・移動範囲・画像URL） |
+| `GET`    | `/api/pieces/:pieceId` | 駒詳細（skill definition・移動範囲・画像URL） |
 | `PUT`    | `/api/pieces/:pieceId` | 駒更新（multipart/form-data）           |
 | `DELETE` | `/api/pieces/:pieceId` | 駒削除（画像も削除）                    |
+| `GET`    | `/api/skills/:skillId` | skill v2/legacy 詳細を取得               |
 
 ### ステージ
 

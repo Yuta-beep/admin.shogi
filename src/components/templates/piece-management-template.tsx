@@ -22,7 +22,9 @@ export function PieceManagementTemplate({ mode, pieceId }: Props) {
   const {
     pieces,
     movePatterns,
-    skillDraftOptions,
+    skills,
+    skillRegistry,
+    selectedSkillDetail,
     form,
     isEditMode,
     isLoading,
@@ -31,6 +33,14 @@ export function PieceManagementTemplate({ mode, pieceId }: Props) {
     successMessage,
     queryInput,
     onChange,
+    updateSkillDraftField,
+    addSkillCondition,
+    updateSkillCondition,
+    removeSkillCondition,
+    addSkillEffect,
+    updateSkillEffect,
+    removeSkillEffect,
+    loadSelectedSkillAsDraft,
     setQueryInput,
     search,
     resetSearch,
@@ -106,10 +116,20 @@ export function PieceManagementTemplate({ mode, pieceId }: Props) {
         <PieceForm
           form={form}
           movePatterns={movePatterns}
-          skillDraftOptions={skillDraftOptions}
+          skills={skills}
+          skillRegistry={skillRegistry}
+          selectedSkillDetail={selectedSkillDetail}
           isEditMode={isEditMode}
           isSubmitting={isSubmitting}
           onChange={onChange}
+          updateSkillDraftField={updateSkillDraftField}
+          addSkillCondition={addSkillCondition}
+          updateSkillCondition={updateSkillCondition}
+          removeSkillCondition={removeSkillCondition}
+          addSkillEffect={addSkillEffect}
+          updateSkillEffect={updateSkillEffect}
+          removeSkillEffect={removeSkillEffect}
+          loadSelectedSkillAsDraft={loadSelectedSkillAsDraft}
           onSubmit={() => {
             void submit();
           }}

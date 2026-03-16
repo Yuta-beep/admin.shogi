@@ -36,8 +36,14 @@ describe("admin DAO DB schema contract", () => {
     expect(stageDao).toContain('.from("m_piece")');
 
     expect(skillDao).toContain('.from("m_skill")');
+    expect(skillDao).toContain('.from("m_skill_condition")');
     expect(skillDao).toContain('.from("m_skill_effect")');
-    expect(skillDao).toContain("effect_type");
-    expect(skillDao).toContain("trigger_timing");
+    expect(skillDao).toContain('.from("m_skill_schema_group")');
+    expect(skillDao).toContain('.from("m_skill_schema_option")');
+    expect(skillDao).toContain('.from("m_skill_implementation_kind")');
+    expect(skillDao).toContain("implementation_kind");
+    expect(skillDao).toContain("trigger_group");
+    expect(skillDao).toContain("target_group");
+    expect(skillDao).toContain("script_hook");
   });
 });
