@@ -134,16 +134,17 @@ export async function getPieceDetailUseCase(
   const piece = await deps.getPieceById(pieceId);
   if (!piece) return null;
 
-  const [skillDefinition, moveVectors, movePattern, imageUrl] = await Promise.all([
-    piece.skillId
-      ? deps.getSkillDefinitionBySkillId(piece.skillId)
-      : Promise.resolve(null),
-    deps.listMoveVectorsByMovePatternId(piece.movePatternId),
-    deps.getMovePatternDetailById(piece.movePatternId),
-    piece.imageBucket && piece.imageKey
-      ? deps.createSignedImageUrl(piece.imageBucket, piece.imageKey)
-      : Promise.resolve(null),
-  ]);
+  const [skillDefinition, moveVectors, movePattern, imageUrl] =
+    await Promise.all([
+      piece.skillId
+        ? deps.getSkillDefinitionBySkillId(piece.skillId)
+        : Promise.resolve(null),
+      deps.listMoveVectorsByMovePatternId(piece.movePatternId),
+      deps.getMovePatternDetailById(piece.movePatternId),
+      piece.imageBucket && piece.imageKey
+        ? deps.createSignedImageUrl(piece.imageBucket, piece.imageKey)
+        : Promise.resolve(null),
+    ]);
 
   return { piece, skillDefinition, moveVectors, movePattern, imageUrl };
 }
@@ -319,7 +320,10 @@ export async function updatePieceUseCase(
 
 export async function deletePieceUseCase(
   pieceId: number,
-  deps: Pick<PieceUseCaseDeps, "getPieceById" | "deletePieceImage" | "deletePiece"> = defaultDeps,
+  deps: Pick<
+    PieceUseCaseDeps,
+    "getPieceById" | "deletePieceImage" | "deletePiece"
+  > = defaultDeps,
 ): Promise<{ deleted: boolean }> {
   const existing = await deps.getPieceById(pieceId);
   if (!existing) throw new Error(`Piece ${pieceId} not found`);

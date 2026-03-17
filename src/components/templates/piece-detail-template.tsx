@@ -72,7 +72,11 @@ async function fetchPieceDetail(id: number): Promise<PieceDetailData> {
   return json.data as PieceDetailData;
 }
 
-function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecord | null }) {
+function SkillDefinitionPanel({
+  definition,
+}: {
+  definition: SkillDefinitionRecord | null;
+}) {
   if (!definition) {
     return <p className="text-sm text-slate-500">スキル定義はありません。</p>;
   }
@@ -85,16 +89,21 @@ function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecor
           implementation_kind: {definition.implementationKind ?? "legacy/null"}
         </div>
         <div>
-          trigger: {definition.trigger.group ?? "-"} / {definition.trigger.type ?? "-"}
+          trigger: {definition.trigger.group ?? "-"} /{" "}
+          {definition.trigger.type ?? "-"}
         </div>
         <div>script_hook: {definition.scriptHook ?? "-"}</div>
-        <div>tags: {definition.tags.length > 0 ? definition.tags.join(", ") : "-"}</div>
+        <div>
+          tags: {definition.tags.length > 0 ? definition.tags.join(", ") : "-"}
+        </div>
       </div>
 
       {definition.version === "v2" ? (
         <>
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">Conditions</h3>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">
+              Conditions
+            </h3>
             {definition.conditions.length === 0 ? (
               <p className="text-xs text-slate-500">条件なし</p>
             ) : (
@@ -117,7 +126,9 @@ function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecor
           </div>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">Effects</h3>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">
+              Effects
+            </h3>
             {definition.effects.length === 0 ? (
               <p className="text-xs text-slate-500">effect なし</p>
             ) : (
@@ -128,7 +139,8 @@ function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecor
                     className="rounded border border-slate-200 p-2"
                   >
                     <div>
-                      #{effect.effectOrder} {effect.effectGroup} / {effect.effectType}
+                      #{effect.effectOrder} {effect.effectGroup} /{" "}
+                      {effect.effectType}
                     </div>
                     <div>
                       target: {effect.targetGroup} / {effect.targetSelector}
@@ -144,7 +156,9 @@ function SkillDefinitionPanel({ definition }: { definition: SkillDefinitionRecor
         </>
       ) : (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-slate-900">Legacy Effects</h3>
+          <h3 className="mb-2 text-sm font-semibold text-slate-900">
+            Legacy Effects
+          </h3>
           {definition.legacyEffects.length === 0 ? (
             <p className="text-xs text-slate-500">legacy effect なし</p>
           ) : (
@@ -248,7 +262,9 @@ export function PieceDetailTemplate({ pieceId }: Props) {
           })()}
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">基本情報</h2>
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">
+              基本情報
+            </h2>
             <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
               <div>駒ID: {data.piece.pieceId}</div>
               <div>駒コード: {data.piece.pieceCode}</div>
@@ -262,7 +278,9 @@ export function PieceDetailTemplate({ pieceId }: Props) {
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">駒画像</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+                駒画像
+              </h3>
               {data.imageUrl ? (
                 <Image
                   src={data.imageUrl}
@@ -278,7 +296,9 @@ export function PieceDetailTemplate({ pieceId }: Props) {
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">移動可能範囲</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+                移動可能範囲
+              </h3>
               <div className="inline-grid grid-cols-9 gap-1 rounded-md bg-slate-200 p-2">
                 {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => {
                   const row = Math.floor(i / BOARD_SIZE);
@@ -304,7 +324,9 @@ export function PieceDetailTemplate({ pieceId }: Props) {
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">スキル定義詳細</h2>
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">
+              スキル定義詳細
+            </h2>
             <SkillDefinitionPanel definition={data.skillDefinition} />
           </section>
         </>

@@ -15,10 +15,7 @@ import { SelectInput } from "@/components/atoms/select-input";
 import { TextInput } from "@/components/atoms/text-input";
 import { FormField } from "@/components/molecules/form-field";
 import { MoveRangePickerModal } from "@/components/organisms/move-range-picker-modal";
-import {
-  PieceFormState,
-  SkillMode,
-} from "@/hooks/use-piece-management";
+import { PieceFormState, SkillMode } from "@/hooks/use-piece-management";
 import {
   SkillDraftConditionFormState,
   SkillDraftEffectFormState,
@@ -504,7 +501,9 @@ export function PieceForm({
                   ? `選択中: ${selectedMovePattern.moveName}`
                   : "未選択"}
             </div>
-            {rangeHint ? <div className="text-xs text-slate-500">{rangeHint}</div> : null}
+            {rangeHint ? (
+              <div className="text-xs text-slate-500">{rangeHint}</div>
+            ) : null}
           </div>
         </FormField>
 
@@ -576,7 +575,9 @@ export function PieceForm({
                   <FormField label="スキル" required>
                     <SelectInput
                       value={form.skillId}
-                      onChange={(event) => onChange("skillId", event.target.value)}
+                      onChange={(event) =>
+                        onChange("skillId", event.target.value)
+                      }
                       disabled={isSubmitting}
                     >
                       <option value="">選択してください</option>
@@ -589,14 +590,21 @@ export function PieceForm({
                   </FormField>
                   {selectedSkillDetail ? (
                     <div className="rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-                      <div>implementation: {selectedSkillDetail.implementationKind ?? "-"}</div>
+                      <div>
+                        implementation:{" "}
+                        {selectedSkillDetail.implementationKind ?? "-"}
+                      </div>
                       <div>
                         trigger: {selectedSkillDetail.trigger.group ?? "-"} /{" "}
                         {selectedSkillDetail.trigger.type ?? "-"}
                       </div>
-                      <div>conditions: {selectedSkillDetail.conditions.length}</div>
+                      <div>
+                        conditions: {selectedSkillDetail.conditions.length}
+                      </div>
                       <div>effects: {selectedSkillDetail.effects.length}</div>
-                      <div>script_hook: {selectedSkillDetail.scriptHook ?? "-"}</div>
+                      <div>
+                        script_hook: {selectedSkillDetail.scriptHook ?? "-"}
+                      </div>
                       {selectedSkillDetail.version === "v2" ? (
                         <Button
                           variant="neutral"
@@ -674,7 +682,9 @@ export function PieceForm({
       <div className="mt-4">
         <Button
           onClick={onSubmit}
-          disabled={isSubmitting || (!form.movePatternId && !form.moveVectorsJson)}
+          disabled={
+            isSubmitting || (!form.movePatternId && !form.moveVectorsJson)
+          }
         >
           {isEditMode ? "更新" : "作成"}
         </Button>

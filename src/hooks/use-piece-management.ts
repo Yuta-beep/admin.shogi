@@ -407,7 +407,10 @@ export function usePieceManagement() {
   const addSkillEffect = useCallback(() => {
     setForm((prev) => ({
       ...prev,
-      skillEffects: [...prev.skillEffects, createEmptySkillDraftEffectFormState()],
+      skillEffects: [
+        ...prev.skillEffects,
+        createEmptySkillDraftEffectFormState(),
+      ],
     }));
   }, []);
 

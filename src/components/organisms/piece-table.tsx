@@ -130,7 +130,9 @@ export function PieceTable({
                         "-"
                       )}
                     </td>
-                    <td className="px-3 py-2">{piece.imageKey ? "あり" : "-"}</td>
+                    <td className="px-3 py-2">
+                      {piece.imageKey ? "あり" : "-"}
+                    </td>
                     <td className="px-3 py-2">
                       {piece.isActive ? "有効" : "無効"}
                     </td>

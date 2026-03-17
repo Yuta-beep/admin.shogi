@@ -95,7 +95,9 @@ function generateSkillCode() {
 }
 
 function isSkillV2Ready(row: SkillMetaRow) {
-  return Boolean(row.implementation_kind && row.trigger_group && row.trigger_type);
+  return Boolean(
+    row.implementation_kind && row.trigger_group && row.trigger_type,
+  );
 }
 
 function normalizeTagList(value: unknown): string[] {
@@ -174,11 +176,14 @@ function toV2EffectRecord(
     targetSelector: effect.target_selector,
     paramsJson: effect.params_json ?? {},
     groupName:
-      labelMaps.groups.get(`effect:${effect.effect_group}`) ?? effect.effect_group,
+      labelMaps.groups.get(`effect:${effect.effect_group}`) ??
+      effect.effect_group,
     typeName:
-      labelMaps.options.get(`effect:${effect.effect_type}`) ?? effect.effect_type,
+      labelMaps.options.get(`effect:${effect.effect_type}`) ??
+      effect.effect_type,
     targetGroupName:
-      labelMaps.groups.get(`target:${effect.target_group}`) ?? effect.target_group,
+      labelMaps.groups.get(`target:${effect.target_group}`) ??
+      effect.target_group,
     targetSelectorName:
       labelMaps.options.get(`target:${effect.target_selector}`) ??
       effect.target_selector,
@@ -187,13 +192,17 @@ function toV2EffectRecord(
 
 function extractProcChance(input: SkillDraftInput) {
   const probabilityCondition = input.conditions.find(
-    (condition) => condition.group === "probability" && condition.type === "chance_roll",
+    (condition) =>
+      condition.group === "probability" && condition.type === "chance_roll",
   );
   const value = probabilityCondition?.paramsJson.procChance;
   return typeof value === "number" ? value : null;
 }
 
-function extractNumericParam(params: Record<string, unknown>, ...keys: string[]) {
+function extractNumericParam(
+  params: Record<string, unknown>,
+  ...keys: string[]
+) {
   for (const key of keys) {
     const value = params[key];
     if (typeof value === "number") return value;
@@ -201,7 +210,10 @@ function extractNumericParam(params: Record<string, unknown>, ...keys: string[])
   return null;
 }
 
-function extractStringParam(params: Record<string, unknown>, ...keys: string[]) {
+function extractStringParam(
+  params: Record<string, unknown>,
+  ...keys: string[]
+) {
   for (const key of keys) {
     const value = params[key];
     if (typeof value === "string" && value.trim() !== "") return value;
@@ -229,7 +241,8 @@ function buildSkillDefinitionRecord(
     .filter((effect) => effect.is_active !== false)
     .sort((a, b) => a.effect_order - b.effect_order);
   const version =
-    isSkillV2Ready(row) && (row.implementation_kind === "script_hook" || readyEffects.length >= 0)
+    isSkillV2Ready(row) &&
+    (row.implementation_kind === "script_hook" || readyEffects.length >= 0)
       ? "v2"
       : "legacy";
 
@@ -240,16 +253,19 @@ function buildSkillDefinitionRecord(
     version,
     implementationKind: row.implementation_kind,
     implementationKindName: row.implementation_kind
-      ? labelMaps.implementationKinds.get(row.implementation_kind) ?? row.implementation_kind
+      ? (labelMaps.implementationKinds.get(row.implementation_kind) ??
+        row.implementation_kind)
       : null,
     trigger: {
       group: row.trigger_group,
       type: row.trigger_type,
       groupName: row.trigger_group
-        ? labelMaps.groups.get(`trigger:${row.trigger_group}`) ?? row.trigger_group
+        ? (labelMaps.groups.get(`trigger:${row.trigger_group}`) ??
+          row.trigger_group)
         : null,
       typeName: row.trigger_type
-        ? labelMaps.options.get(`trigger:${row.trigger_type}`) ?? row.trigger_type
+        ? (labelMaps.options.get(`trigger:${row.trigger_type}`) ??
+          row.trigger_type)
         : null,
     },
     source: {
@@ -271,11 +287,13 @@ function buildSkillDefinitionRecord(
               type: condition.condition_type,
               paramsJson: condition.params_json ?? {},
               groupName:
-                labelMaps.groups.get(`condition:${condition.condition_group}`) ??
-                condition.condition_group,
+                labelMaps.groups.get(
+                  `condition:${condition.condition_group}`,
+                ) ?? condition.condition_group,
               typeName:
-                labelMaps.options.get(`condition:${condition.condition_type}`) ??
-                condition.condition_type,
+                labelMaps.options.get(
+                  `condition:${condition.condition_type}`,
+                ) ?? condition.condition_type,
             }))
         : [],
     effects:
@@ -284,7 +302,8 @@ function buildSkillDefinitionRecord(
             .map((effect) => toV2EffectRecord(effect, labelMaps))
             .filter((effect): effect is SkillEffectRecord => Boolean(effect))
         : [],
-    legacyEffects: version === "legacy" ? legacyEffects.map(toLegacyEffectRecord) : [],
+    legacyEffects:
+      version === "legacy" ? legacyEffects.map(toLegacyEffectRecord) : [],
   };
 }
 
@@ -314,13 +333,17 @@ async function fetchSkillRegistry(
     client
       .schema("master")
       .from("m_skill_implementation_kind")
-      .select("implementation_kind,display_name,description,sort_order,is_active")
+      .select(
+        "implementation_kind,display_name,description,sort_order,is_active",
+      )
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     client
       .schema("master")
       .from("m_skill_schema_group")
-      .select("schema_kind,group_code,group_name,description,sort_order,is_active")
+      .select(
+        "schema_kind,group_code,group_name,description,sort_order,is_active",
+      )
       .eq("is_active", true)
       .order("schema_kind", { ascending: true })
       .order("sort_order", { ascending: true }),
@@ -427,37 +450,39 @@ export async function listSkillsWithClient(
   const skillIds = rows.map((row) => row.skill_id);
   if (skillIds.length === 0) return [];
 
-  const [{ data: conditionRows, error: conditionError }, { data: effectRows, error: effectError }] =
-    await Promise.all([
-      client
-        .schema("master")
-        .from("m_skill_condition")
-        .select(
-          "skill_condition_id,skill_id,condition_order,condition_group,condition_type,params_json,is_active",
-        )
-        .eq("is_active", true)
-        .in("skill_id", skillIds)
-        .order("skill_id", { ascending: true })
-        .order("condition_order", { ascending: true }),
-      client
-        .schema("master")
-        .from("m_skill_effect")
-        .select(
-          "skill_effect_id,skill_id,effect_order,effect_group,effect_type,target_group,target_selector,target_rule,trigger_timing,proc_chance,duration_turns,radius,value_num,value_text,params_json,is_active",
-        )
-        .eq("is_active", true)
-        .in("skill_id", skillIds)
-        .order("skill_id", { ascending: true })
-        .order("effect_order", { ascending: true }),
-    ]);
+  const [
+    { data: conditionRows, error: conditionError },
+    { data: effectRows, error: effectError },
+  ] = await Promise.all([
+    client
+      .schema("master")
+      .from("m_skill_condition")
+      .select(
+        "skill_condition_id,skill_id,condition_order,condition_group,condition_type,params_json,is_active",
+      )
+      .eq("is_active", true)
+      .in("skill_id", skillIds)
+      .order("skill_id", { ascending: true })
+      .order("condition_order", { ascending: true }),
+    client
+      .schema("master")
+      .from("m_skill_effect")
+      .select(
+        "skill_effect_id,skill_id,effect_order,effect_group,effect_type,target_group,target_selector,target_rule,trigger_timing,proc_chance,duration_turns,radius,value_num,value_text,params_json,is_active",
+      )
+      .eq("is_active", true)
+      .in("skill_id", skillIds)
+      .order("skill_id", { ascending: true })
+      .order("effect_order", { ascending: true }),
+  ]);
 
   if (conditionError) throw new Error(conditionError.message);
   if (effectError) throw new Error(effectError.message);
 
   return rows.map((row) => {
-    const skillConditions = ((conditionRows ?? []) as SkillConditionRow[]).filter(
-      (condition) => condition.skill_id === row.skill_id,
-    );
+    const skillConditions = (
+      (conditionRows ?? []) as SkillConditionRow[]
+    ).filter((condition) => condition.skill_id === row.skill_id);
     const skillEffects = ((effectRows ?? []) as SkillEffectRow[]).filter(
       (effect) => effect.skill_id === row.skill_id,
     );
@@ -509,27 +534,29 @@ export async function getSkillDefinitionBySkillIdWithClient(
   if (skillError) throw new Error(skillError.message);
   if (!skillRow) return null;
 
-  const [{ data: conditionRows, error: conditionError }, { data: effectRows, error: effectError }] =
-    await Promise.all([
-      client
-        .schema("master")
-        .from("m_skill_condition")
-        .select(
-          "skill_condition_id,skill_id,condition_order,condition_group,condition_type,params_json,is_active",
-        )
-        .eq("skill_id", skillId)
-        .eq("is_active", true)
-        .order("condition_order", { ascending: true }),
-      client
-        .schema("master")
-        .from("m_skill_effect")
-        .select(
-          "skill_effect_id,skill_id,effect_order,effect_group,effect_type,target_group,target_selector,target_rule,trigger_timing,proc_chance,duration_turns,radius,value_num,value_text,params_json,is_active",
-        )
-        .eq("skill_id", skillId)
-        .eq("is_active", true)
-        .order("effect_order", { ascending: true }),
-    ]);
+  const [
+    { data: conditionRows, error: conditionError },
+    { data: effectRows, error: effectError },
+  ] = await Promise.all([
+    client
+      .schema("master")
+      .from("m_skill_condition")
+      .select(
+        "skill_condition_id,skill_id,condition_order,condition_group,condition_type,params_json,is_active",
+      )
+      .eq("skill_id", skillId)
+      .eq("is_active", true)
+      .order("condition_order", { ascending: true }),
+    client
+      .schema("master")
+      .from("m_skill_effect")
+      .select(
+        "skill_effect_id,skill_id,effect_order,effect_group,effect_type,target_group,target_selector,target_rule,trigger_timing,proc_chance,duration_turns,radius,value_num,value_text,params_json,is_active",
+      )
+      .eq("skill_id", skillId)
+      .eq("is_active", true)
+      .order("effect_order", { ascending: true }),
+  ]);
 
   if (conditionError) throw new Error(conditionError.message);
   if (effectError) throw new Error(effectError.message);
@@ -567,9 +594,15 @@ async function insertSkillDefinitionV2WithClient(
       skill_type: "active_or_passive",
       target_rule: firstEffect?.target.selector ?? "unspecified",
       effect_summary_type:
-        input.implementationKind === "script_hook" ? "scripted" : "structured_v2",
+        input.implementationKind === "script_hook"
+          ? "scripted"
+          : "structured_v2",
       proc_chance: procChance,
-      duration_turns: extractNumericParam(firstParams, "durationTurns", "duration"),
+      duration_turns: extractNumericParam(
+        firstParams,
+        "durationTurns",
+        "duration",
+      ),
       params_json: {
         source: "admin.shogi",
         schemaVersion: "skill_v2",
@@ -607,7 +640,11 @@ async function insertSkillDefinitionV2WithClient(
       );
 
     if (conditionError) {
-      await client.schema("master").from("m_skill").delete().eq("skill_id", skillId);
+      await client
+        .schema("master")
+        .from("m_skill")
+        .delete()
+        .eq("skill_id", skillId);
       throw new Error(conditionError.message);
     }
   }
@@ -652,7 +689,11 @@ async function insertSkillDefinitionV2WithClient(
       );
 
     if (effectError) {
-      await client.schema("master").from("m_skill").delete().eq("skill_id", skillId);
+      await client
+        .schema("master")
+        .from("m_skill")
+        .delete()
+        .eq("skill_id", skillId);
       throw new Error(effectError.message);
     }
   }
@@ -690,9 +731,15 @@ export async function updateSkillDefinitionV2WithClient(
       trigger_timing: input.trigger.type,
       target_rule: firstEffect?.target.selector ?? "unspecified",
       effect_summary_type:
-        input.implementationKind === "script_hook" ? "scripted" : "structured_v2",
+        input.implementationKind === "script_hook"
+          ? "scripted"
+          : "structured_v2",
       proc_chance: procChance,
-      duration_turns: extractNumericParam(firstParams, "durationTurns", "duration"),
+      duration_turns: extractNumericParam(
+        firstParams,
+        "durationTurns",
+        "duration",
+      ),
       params_json: {
         source: "admin.shogi",
         schemaVersion: "skill_v2",
