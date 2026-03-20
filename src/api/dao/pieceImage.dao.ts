@@ -67,10 +67,6 @@ export async function createSignedImageUrl(
   imageKey: string,
 ): Promise<string | null> {
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase.storage
-    .from(imageBucket)
-    .createSignedUrl(imageKey, 60 * 60);
-
-  if (error) return null;
-  return data.signedUrl ?? null;
+  const { data } = supabase.storage.from(imageBucket).getPublicUrl(imageKey);
+  return data.publicUrl ?? null;
 }
